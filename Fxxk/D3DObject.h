@@ -15,7 +15,7 @@ public:
     D3DObject(
         std::initializer_list<float>&& vertices, 
         std::initializer_list<float>&& normals,
-        std::initializer_list<float>&& textcoord, 
+        std::initializer_list<float>&& texcoord,
         std::initializer_list<uint32_t>&& indices,
         std::wstring&& vertexShader,
         std::wstring&& pixelShader,
@@ -24,6 +24,30 @@ public:
         std::initializer_list<D3D11_SAMPLER_DESC>&& samplerDesc,
         D3D_PRIMITIVE_TOPOLOGY topopogy
         );
+    D3DObject(
+        std::vector<float>& vertices,
+        std::vector<float>& normals,
+        std::vector<float>& texcoord,
+        std::vector<uint32_t>& indices,
+        std::wstring&& vertexShader,
+        std::wstring&& pixelShader,
+        std::vector<std::wstring>&& textureFiles,
+        D3D11_RASTERIZER_DESC&& rasterizerDesc,
+        std::vector<D3D11_SAMPLER_DESC>& samplerDesc,
+        D3D_PRIMITIVE_TOPOLOGY topopogy
+    );
+    D3DObject(
+        std::vector<float>&& vertices,
+        std::vector<float>&& normals,
+        std::vector<float>&& texcoord,
+        std::vector<uint32_t>&& indices,
+        std::wstring&& vertexShader,
+        std::wstring&& pixelShader,
+        std::vector<std::wstring>&& textureFiles,
+        D3D11_RASTERIZER_DESC&& rasterizerDesc,
+        std::vector<D3D11_SAMPLER_DESC>&& samplerDesc,
+        D3D_PRIMITIVE_TOPOLOGY topopogy
+    );
     void updateTransform(DirectX::XMMATRIX&& transform);
     void updateTransform(DirectX::XMMATRIX& transform);
     void init(D3DScene& scene);

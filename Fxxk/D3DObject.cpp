@@ -53,6 +53,77 @@ D3DObject::D3DObject(
     m_matrixDirty(false)
 {
 }
+
+D3DObject::D3DObject(
+    std::vector<float>& vertices,
+    std::vector<float>& normals,
+    std::vector<float>& texcoord,
+    std::vector<uint32_t>& indices,
+    std::wstring&& vertexShader,
+    std::wstring&& pixelShader,
+    std::vector<std::wstring>&& textureFiles,
+    D3D11_RASTERIZER_DESC&& rasterizerDesc,
+    std::vector<D3D11_SAMPLER_DESC>& samplerDesc,
+    D3D_PRIMITIVE_TOPOLOGY topopogy
+) :
+    m_indexBuffer(nullptr),
+    m_vertexBuffer{ { nullptr, nullptr, nullptr, nullptr } },
+    m_layout(nullptr),
+    m_vs(nullptr),
+    m_ps(nullptr),
+    m_rs(nullptr),
+    m_vertices(vertices),
+    m_normals(normals),
+    m_texcoord(texcoord),
+    m_incides(indices),
+    m_vertexShader(vertexShader),
+    m_pixelShader(pixelShader),
+    m_textureFiles(textureFiles),
+    m_rasterizerDesc(rasterizerDesc),
+    m_samplerDesc(samplerDesc),
+    m_topology(topopogy),
+    m_transform(DirectX::XMMatrixIdentity()),
+    m_inited(false),
+    m_matrixDirty(false)
+{
+
+}
+
+D3DObject::D3DObject(
+    std::vector<float>&& vertices,
+    std::vector<float>&& normals,
+    std::vector<float>&& texcoord,
+    std::vector<uint32_t>&& indices,
+    std::wstring&& vertexShader,
+    std::wstring&& pixelShader,
+    std::vector<std::wstring>&& textureFiles,
+    D3D11_RASTERIZER_DESC&& rasterizerDesc,
+    std::vector<D3D11_SAMPLER_DESC>&& samplerDesc,
+    D3D_PRIMITIVE_TOPOLOGY topopogy
+) :
+    m_indexBuffer(nullptr),
+    m_vertexBuffer{ { nullptr, nullptr, nullptr, nullptr } },
+    m_layout(nullptr),
+    m_vs(nullptr),
+    m_ps(nullptr),
+    m_rs(nullptr),
+    m_vertices(vertices),
+    m_normals(normals),
+    m_texcoord(texcoord),
+    m_incides(indices),
+    m_vertexShader(vertexShader),
+    m_pixelShader(pixelShader),
+    m_textureFiles(textureFiles),
+    m_rasterizerDesc(rasterizerDesc),
+    m_samplerDesc(samplerDesc),
+    m_topology(topopogy),
+    m_transform(DirectX::XMMatrixIdentity()),
+    m_inited(false),
+    m_matrixDirty(false)
+{
+
+}
+
 void D3DObject::updateTransform(DirectX::XMMATRIX&& transform)
 {
     m_transform = transform;
