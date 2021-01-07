@@ -8,25 +8,24 @@
 #include "Timer.hpp"
 
 #pragma comment(lib, "pathcch.lib")
+#define M_PI acosf(-1.0)
 
 using namespace std;
 
-constexpr auto MAX_LOADSTRING = 100;
-#define M_PI acosf(-1.0)
 
 // Global Variables:
+constexpr auto MAX_LOADSTRING = 100;
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+D3DScene* g_scene;
+Timer* g_timer;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int, HWND& hwnd);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-
-D3DScene* g_scene;
-Timer* g_timer;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
