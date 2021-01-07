@@ -14,13 +14,15 @@ class D3DObject
 public:
     D3DObject(
         std::initializer_list<float>&& vertices, 
+        std::initializer_list<float>&& normals,
         std::initializer_list<float>&& textcoord, 
         std::initializer_list<uint32_t>&& indices,
         std::wstring&& vertexShader,
         std::wstring&& pixelShader,
         std::initializer_list<std::wstring>&& textureFiles,
         D3D11_RASTERIZER_DESC&& rasterizerDesc, 
-        std::initializer_list<D3D11_SAMPLER_DESC>&& samplerDesc
+        std::initializer_list<D3D11_SAMPLER_DESC>&& samplerDesc,
+        D3D_PRIMITIVE_TOPOLOGY topopogy
         );
     void updateTransform(DirectX::XMMATRIX&& transform);
     void updateTransform(DirectX::XMMATRIX& transform);
@@ -37,10 +39,11 @@ private:
     ID3D11PixelShader* m_ps;
     ID3D11RasterizerState* m_rs;
     std::vector<ID3D11SamplerState*> m_ss;
-    std::array<ID3D11Buffer*, 3> m_vertexBuffer;
+    std::array<ID3D11Buffer*, 4> m_vertexBuffer;
     std::vector<ID3D11Resource*> m_textures;
     std::vector<ID3D11ShaderResourceView*> m_textureViews;
     std::vector<float> m_vertices;
+    std::vector<float> m_normals;
     std::vector<float> m_texcoord;
     std::vector<uint32_t> m_incides;
     DirectX::XMMATRIX m_transform;
@@ -49,6 +52,7 @@ private:
     std::vector<std::wstring> m_textureFiles;
     D3D11_RASTERIZER_DESC m_rasterizerDesc;
     std::vector<D3D11_SAMPLER_DESC> m_samplerDesc;
+    D3D_PRIMITIVE_TOPOLOGY m_topology;
     bool m_inited;
     bool m_matrixDirty;
 };

@@ -64,10 +64,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     D3DObject obj(
         {
-            0.0f,  0.0f,  0.0f,
-            w, 0.0f,  0.0f,
-            w, h,  0.0f,
+            0.0f, 0.0f, 0.0f,
+            w, 0.0f, 0.0f,
+            w, h, 0.0f,
             0.0f, h, 0.0f
+        },
+        {
+            0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f
         },
         {
             0.0f, 1.0f,
@@ -107,7 +113,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 .MinLOD = 0,
                 .MaxLOD = D3D11_FLOAT32_MAX,
             }
-        });
+        },
+        D3D_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     float angle = 0;
     float scale = 1.0f;

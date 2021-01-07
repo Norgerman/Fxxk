@@ -7,35 +7,39 @@
 
 using namespace std;
 
-const uint32_t vertexStride[] = { 3 * sizeof(float), 2 * sizeof(float), sizeof(DirectX::XMMATRIX) };
-const uint32_t vertexOffset[] = { 0, 0, 0 };
+const uint32_t vertexStride[] = { 3 * sizeof(float), 3 * sizeof(float), 2 * sizeof(float), sizeof(DirectX::XMMATRIX) };
+const uint32_t vertexOffset[] = { 0, 0, 0, 0};
 
 const D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
     { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "MATRIX", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
-    { "MATRIX", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 16, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
-    { "MATRIX", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 32, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
-    { "MATRIX", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 48, D3D11_INPUT_PER_INSTANCE_DATA, 0 }
+    { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "MATRIX", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
+    { "MATRIX", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 16, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
+    { "MATRIX", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 32, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
+    { "MATRIX", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 48, D3D11_INPUT_PER_INSTANCE_DATA, 0 }
 };
 
 D3DObject::D3DObject(
     initializer_list<float>&& vertices,
+    initializer_list<float>&& normals,
     initializer_list<float>&& texcoord,
     initializer_list<uint32_t>&& indices,
     std::wstring&& vertexShader,
     std::wstring&& pixelShader,
     initializer_list<std::wstring>&& textureFiles,
     D3D11_RASTERIZER_DESC&& rasterizerDesc,
-    initializer_list<D3D11_SAMPLER_DESC>&& samplerDesc
+    initializer_list<D3D11_SAMPLER_DESC>&& samplerDesc,
+    D3D_PRIMITIVE_TOPOLOGY topopogy
 ) :
     m_indexBuffer(nullptr),
-    m_vertexBuffer{ { nullptr, nullptr, nullptr } },
+    m_vertexBuffer{ { nullptr, nullptr, nullptr, nullptr } },
     m_layout(nullptr),
     m_vs(nullptr),
     m_ps(nullptr),
     m_rs(nullptr),
     m_vertices(vertices),
+    m_normals(normals),
     m_texcoord(texcoord),
     m_incides(indices),
     m_vertexShader(vertexShader),
@@ -43,6 +47,7 @@ D3DObject::D3DObject(
     m_textureFiles(textureFiles),
     m_rasterizerDesc(rasterizerDesc),
     m_samplerDesc(samplerDesc),
+    m_topology(topopogy),
     m_transform(DirectX::XMMatrixIdentity()),
     m_inited(false),
     m_matrixDirty(false)
@@ -66,10 +71,10 @@ void D3DObject::updateTransform(D3DScene& scene)
     {
         D3D11_MAPPED_SUBRESOURCE mappedResource;
         ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-        auto hr = scene.getContext()->Map(m_vertexBuffer[2], 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+        auto hr = scene.getContext()->Map(m_vertexBuffer[3], 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
         assert(SUCCEEDED(hr));
         memcpy(mappedResource.pData, &m_transform, sizeof(m_transform));
-        scene.getContext()->Unmap(m_vertexBuffer[2], 0);
+        scene.getContext()->Unmap(m_vertexBuffer[3], 0);
         m_matrixDirty = false;
     }
 }
@@ -80,7 +85,7 @@ void D3DObject::render(D3DScene& scene)
     updateTransform(scene);
     scene.getContext()->RSSetState(m_rs);
     scene.getContext()->PSSetSamplers(0, m_ss.size(), m_ss.data());
-    scene.getContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    scene.getContext()->IASetPrimitiveTopology(m_topology);
     scene.getContext()->IASetInputLayout(m_layout);
     scene.getContext()->IASetVertexBuffers(0, m_vertexBuffer.size(), m_vertexBuffer.data(), vertexStride, vertexOffset);
     scene.getContext()->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -169,6 +174,17 @@ void D3DObject::init(D3DScene& scene)
         &m_vertexBuffer[0]);
     assert(SUCCEEDED(hr));
 
+    D3D11_BUFFER_DESC normalBufferDescr = {};
+    normalBufferDescr.ByteWidth = sizeof(float) * m_normals.size();
+    normalBufferDescr.Usage = D3D11_USAGE_DEFAULT;
+    normalBufferDescr.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    sr.pSysMem = m_normals.data();
+    hr = scene.getDevice()->CreateBuffer(
+        &normalBufferDescr,
+        &sr,
+        &m_vertexBuffer[1]);
+    assert(SUCCEEDED(hr));
+
     D3D11_BUFFER_DESC texBufferDescr = {};
     texBufferDescr.ByteWidth = sizeof(float) * m_texcoord.size();
     texBufferDescr.Usage = D3D11_USAGE_DEFAULT;
@@ -177,7 +193,7 @@ void D3DObject::init(D3DScene& scene)
     hr = scene.getDevice()->CreateBuffer(
         &texBufferDescr,
         &sr,
-        &m_vertexBuffer[1]);
+        &m_vertexBuffer[2]);
     assert(SUCCEEDED(hr));
 
     D3D11_BUFFER_DESC matrixBufferDescr = {};
@@ -189,7 +205,7 @@ void D3DObject::init(D3DScene& scene)
     hr = scene.getDevice()->CreateBuffer(
         &matrixBufferDescr,
         &sr,
-        &m_vertexBuffer[2]);
+        &m_vertexBuffer[3]);
     assert(SUCCEEDED(hr));
 
     D3D11_BUFFER_DESC indexBufferDesc = { };
