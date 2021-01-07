@@ -12,7 +12,6 @@
 
 using namespace std;
 
-
 // Global Variables:
 constexpr auto MAX_LOADSTRING = 100;
 HINSTANCE hInst;                                // current instance
