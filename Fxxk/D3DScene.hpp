@@ -1,11 +1,11 @@
 #pragma once
-#include <d3d11.h>
-#include <DirectXMath.h>
 #include <initializer_list>
 #include <functional>
 #include <mutex>
 #include <array>
 #include <vector>
+#include <d3d11.h>
+#include <DirectXMath.h>
 #include "D3DGlobal.hpp"
 
 class D3DObject;

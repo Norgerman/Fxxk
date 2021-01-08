@@ -1,10 +1,10 @@
 #pragma once
-#include <d3d11.h>
-#include <DirectXMath.h>
 #include <vector>
 #include <initializer_list>
 #include <string>
 #include <cstdint>
+#include <d3d11.h>
+#include <DirectXMath.h>
 #include "D3DAttribute.hpp"
 #include "D3DConstant.h"
 

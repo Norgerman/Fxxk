@@ -187,8 +187,8 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
   <ItemGroup>
     <Image Include="small.ico" />
     <Image Include="Fxxk.ico" />
-    <Image Include="害怕害怕.png" />
-    <Image Include="害怕害怕2333.png" />
+    <Image Include="a.png" />
+    <Image Include="b.png" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">

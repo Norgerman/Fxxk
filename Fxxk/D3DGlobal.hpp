@@ -1,6 +1,6 @@
 #pragma once
-#include <DirectXMath.h>
 #include <array>
+#include <DirectXMath.h>
 
 class D3DScene;
 

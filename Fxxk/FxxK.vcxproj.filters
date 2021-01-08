@@ -76,13 +76,13 @@
     <Image Include="small.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="害怕害怕2333.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="害怕害怕.png">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="Fxxk.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="a.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="b.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

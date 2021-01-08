@@ -8,7 +8,6 @@
 #include "Timer.hpp"
 #include "D3DAttribute.hpp"
 #include "D3DConstant.h"
-#include <d3dcompiler.h>
 
 #pragma comment(lib, "pathcch.lib")
 #pragma comment(lib, "d3dcompiler.lib" )
@@ -160,8 +159,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
              D3DConstant(color, sizeof(float), 4)
         },
         {
-            s + L"\\บฆลยบฆลย.png",
-            s + L"\\บฆลยบฆลย2333.png"
+            s + L"\\a.png",
+            s + L"\\b.png"
         },
         {
             D3D11_FILL_MODE::D3D11_FILL_SOLID,
