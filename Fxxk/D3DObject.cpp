@@ -70,15 +70,11 @@ void D3DObject::render(D3DScene& scene)
     uploadIndex(scene);
     uploadVertexBuffer(scene);
     uploadConstantBuffer(scene);
+    updateBlend(scene);
 
     scene.getContext()->RSSetState(m_rs);
     scene.getContext()->PSSetSamplers(0, static_cast<uint32_t>(m_ss.size()), m_ss.data());
-
-    if (m_blendState)
-    {
-        scene.getContext()->OMSetBlendState(m_blendState, nullptr, 0xffffffff);
-    }
-
+    scene.getContext()->OMSetBlendState(m_blendState, m_blend.blendFactor, m_blend.sampleMask);
     scene.getContext()->IASetPrimitiveTopology(m_topology);
     scene.getContext()->IASetInputLayout(m_layout);
     scene.getContext()->VSSetConstantBuffers(1, 1, &m_transformBuffer);
@@ -88,13 +84,13 @@ void D3DObject::render(D3DScene& scene)
     scene.getContext()->PSSetShaderResources(0, static_cast<uint32_t>(m_textureViews.size()), m_textureViews.data());
     scene.getContext()->VSSetShader(m_vs, NULL, 0);
     scene.getContext()->PSSetShader(m_ps, NULL, 0);
-    
+
     if (m_indexAttribute && m_indexBuffer)
     {
         scene.getContext()->IASetIndexBuffer(m_indexBuffer, m_indexAttribute->getFormat(), 0);
         scene.getContext()->DrawIndexed(m_indexAttribute->getSize(), 0, m_indexAttribute->getOffset());
     }
-    else if(m_firstAttribute)
+    else if (m_firstAttribute)
     {
         scene.getContext()->Draw(m_firstAttribute->getSize(), 0);
     }
@@ -133,7 +129,7 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
             &desc,
             &sr,
             &buffer);
-        
+
         assert(SUCCEEDED(hr));
 
         if (!m_indexBuffer && attr.isIndex())
@@ -220,13 +216,16 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
         m_ss.push_back(sampleState);
     }
 
-    if (m_blendDesc)
-    {
-        hr = scene.getDevice()->CreateBlendState(m_blendDesc, &m_blendState);
-        assert(SUCCEEDED(hr));
-    }
-
     m_inited = true;
+}
+
+void D3DObject::disableBlend()
+{
+    if (m_blendState)
+    {
+        m_blendState->Release();
+        m_blendState = nullptr;
+    }
 }
 
 void D3DObject::updateAttribute(size_t index, const void* data)
@@ -236,7 +235,7 @@ void D3DObject::updateAttribute(size_t index, const void* data)
 
 void D3DObject::updateIndex(const void* data)
 {
-    if (m_indexAttribute) 
+    if (m_indexAttribute)
     {
         m_indexAttribute->updateData(data);
     }
@@ -250,6 +249,16 @@ void D3DObject::updateVSConstant(size_t index, const void* data)
 void D3DObject::updatePSConstant(size_t index, const void* data)
 {
     m_psConstants[index].updateData(data);
+}
+
+void D3DObject::updateBlend(D3DScene& scene)
+{
+    if (m_blendNeedUpdate) 
+    {
+        disableBlend();
+        scene.getDevice()->CreateBlendState(&m_blend.desc, &m_blendState);
+        m_blendNeedUpdate = false;
+    }
 }
 
 void D3DObject::dispose()

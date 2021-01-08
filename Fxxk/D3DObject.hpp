@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include "D3DGlobal.hpp"
 #include "D3DAttribute.hpp"
 #include "D3DConstant.h"
 
@@ -15,6 +16,12 @@ typedef struct D3DShader
     const void* byteCode;
     size_t size;
 } D3DShader;
+
+typedef struct D3DBlend {
+    D3D11_BLEND_DESC desc;
+    float blendFactor[4];
+    uint32_t sampleMask;
+} D3DBlend;
 
 class D3DObject
 {
@@ -35,8 +42,7 @@ public:
         T3&& textureFiles,
         T4&& rasterizerDesc,
         T5&& samplerDesc,
-        D3D_PRIMITIVE_TOPOLOGY topopogy,
-        D3D11_BLEND_DESC* blendDesc = nullptr
+        D3D_PRIMITIVE_TOPOLOGY topopogy
     ) :
         m_indexBuffer(nullptr),
         m_transformBuffer(nullptr),
@@ -48,6 +54,8 @@ public:
         m_ps(nullptr),
         m_rs(nullptr),
         m_blendState(nullptr),
+        m_blendNeedUpdate(false),
+        m_blend({ {}, { 0 }, 0xffffffff }),
         m_attributes(attributes),
         m_vsConstants(vsConstants),
         m_psConstants(psConstants),
@@ -67,14 +75,24 @@ public:
     void updatePSConstant(size_t index, const void* data);
     void updateIndex(const void* data);
     void init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelShader);
+    void disableBlend();
     void dispose();
     ~D3DObject();
+
+    template<typename T = D3DBlend>
+    void enableBlend(T&& blend)
+    {
+        m_blend = blend;
+        m_blendNeedUpdate = true;
+    }
+
 private:
     void render(D3DScene& scene);
     void uploadTransform(D3DScene& scene);
     void uploadVertexBuffer(D3DScene& scene);
     void uploadConstantBuffer(D3DScene& scene);
     void uploadIndex(D3DScene& scene);
+    void updateBlend(D3DScene& scene);
 
     ID3D11Buffer* m_indexBuffer;
     ID3D11Buffer* m_transformBuffer;
@@ -102,7 +120,8 @@ private:
     std::vector<uint32_t> m_strides;
     std::vector<uint32_t> m_offsets;
     size_t m_indexPosition;
-    D3D11_BLEND_DESC* m_blendDesc;
+    D3DBlend m_blend;
     ID3D11BlendState* m_blendState;
+    bool m_blendNeedUpdate;
     bool m_inited;
 };

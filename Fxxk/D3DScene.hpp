@@ -21,7 +21,7 @@ public:
         D3DScene(D3D_DRIVER_TYPE::D3D_DRIVER_TYPE_HARDWARE, 
             D3D11_CREATE_DEVICE_FLAG::D3D11_CREATE_DEVICE_SINGLETHREADED, 
             { D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0 },
-            D3DGlobal::background_colour, D3DGlobal::project)
+            D3DGlobal::backgroundColour, D3DGlobal::project)
     {
 
     }

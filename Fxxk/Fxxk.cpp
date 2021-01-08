@@ -229,7 +229,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             textureMatrixX[0] = scale;
             textureMatrixY[5] = scale;
 
-            if (count == 10) 
+            if (count == 10)
             {
                 count = 0;
                 color[0] = randf();
