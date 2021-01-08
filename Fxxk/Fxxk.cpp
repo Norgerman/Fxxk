@@ -3,11 +3,16 @@
 
 #include "framework.h"
 #include "Fxxk.h"
-#include "D3DObject.h"
-#include "D3DScene.h"
+#include "D3DObject.hpp"
+#include "D3DScene.hpp"
 #include "Timer.hpp"
+#include "D3DAttribute.hpp"
+#include "D3DConstant.h"
+#include <d3dcompiler.h>
 
 #pragma comment(lib, "pathcch.lib")
+#pragma comment(lib, "d3dcompiler.lib" )
+
 #define M_PI acosf(-1.0)
 
 using namespace std;
@@ -25,6 +30,11 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int, HWND& hwnd);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+inline float randf()
+{
+    return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+}
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -59,31 +69,96 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     g_scene = new D3DScene();
     g_scene->init(hwnd);
 
+    ID3DBlob* vs = nullptr, * ps = nullptr, * error = nullptr;
+#if _DEBUG
+    auto compileFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
+#else
+    auto compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#endif
+
+    auto hr = D3DCompileFromFile(
+        (s + L"\\VertexShader.hlsl").data(),
+        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "main",
+        "vs_5_0",
+        compileFlags,
+        0,
+        &vs,
+        &error);
+    assert(SUCCEEDED(hr));
+
+    hr = D3DCompileFromFile(
+        (s + L"\\PixelShader.hlsl").data(),
+        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "main",
+        "ps_5_0",
+        compileFlags,
+        0,
+        &ps,
+        &error);
+    assert(SUCCEEDED(hr));
+
+    if (error) {
+        error->Release();
+    }
+
     float w = 1600;
     float h = 450;
 
+    float vertices[] = {
+         0.0f, 0.0f, 0.0f,
+         w, 0.0f, 0.0f,
+         w, h, 0.0f,
+         0.0f, h, 0.0f
+    };
+    float normals[] = {
+        0.0f, 0.0f, 0.0f,
+        w, 0.0f, 0.0f,
+        w, h, 0.0f,
+        0.0f, h, 0.0f
+    };
+    float texcoords[] = {
+        0.0f, 1.0f,
+        2.0f, 1.0f,
+        2.0f, 0.0f,
+        0.0f, 0.0f,
+    };
+    uint32_t indices[] = {
+         0, 1, 2, 0, 2, 3
+    };
+    float textureMatrixX[] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+
+    float textureMatrixY[] =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+    };
+
+    float color[] = {
+        1.0f, 1.0f, 1.0f, 0.5f,
+    };
+
     D3DObject obj(
         {
-            0.0f, 0.0f, 0.0f,
-            w, 0.0f, 0.0f,
-            w, h, 0.0f,
-            0.0f, h, 0.0f
+            D3DAttribute(vertices, sizeof(float), 12, "POS", sizeof(float) * 3, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT),
+            D3DAttribute(normals, sizeof(float), 12, "NORMAL", sizeof(float) * 3, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT),
+            D3DAttribute(texcoords, sizeof(float), 8, "TEXCOORD", sizeof(float) * 2, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT),
+            D3DAttribute(textureMatrixX, sizeof(float), 9, "TEXMATRIX", sizeof(float) * 9, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE, DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_INSTANCE_DATA, 3),
+            D3DAttribute(indices, sizeof(uint32_t), 6, "INDICES", sizeof(uint32_t) * 2, 0, D3D11_BIND_FLAG::D3D11_BIND_INDEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32_UINT),
         },
         {
-            0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 1.0f,
-            0.0f, 0.0f, 1.0f
+            D3DConstant(textureMatrixY, sizeof(float), 12)
         },
         {
-            0.0f, 1.0f,
-            2.0f, 1.0f,
-            2.0f, 0.0f,
-            0.0f, 0.0f,
+             D3DConstant(color, sizeof(float), 4)
         },
-        { 0, 1, 2, 0, 2, 3 },
-        s + L"\\VertexShader.hlsl",
-        s + L"\\PixelShader.hlsl",
         {
             s + L"\\บฆลยบฆลย.png",
             s + L"\\บฆลยบฆลย2333.png"
@@ -119,21 +194,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     float angle = 0;
     float scale = 1.0f;
     float step = 0.01f;
+    uint8_t count = 0;
 
     obj.updateTransform(DirectX::XMMatrixTranslation(g_scene->getViewport().Width / 2 - w / 2, g_scene->getViewport().Height / 2 - h / 2, 0.0f));
 
-    obj.init(*g_scene);
+    obj.init(*g_scene, { vs->GetBufferPointer(), vs->GetBufferSize() }, { ps->GetBufferPointer(), ps->GetBufferSize() });
+
+    ps->Release();
+    vs->Release();
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT1));
 
     MSG msg;
 
-    g_timer = new Timer([&obj, &w, &h, &angle, &scale, &step]() -> void
+    g_timer = new Timer([&obj, &w, &h, &angle, &scale, &textureMatrixX, &textureMatrixY, &color, &step, &count]() -> void
         {
             const auto& viewport = g_scene->getViewport();
             scale += step;
-
             angle += 1;
+            count++;
+
             if (angle > 360)
             {
                 angle -= 360;
@@ -146,6 +226,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
             auto r = DirectX::XMMatrixRotationZ(angle / 180 * M_PI);
             auto base = DirectX::XMMatrixTranslation(-viewport.Width / 2, -viewport.Height / 2, 0.0f);
+
+            textureMatrixX[0] = scale;
+            textureMatrixY[5] = scale;
+
+            if (count == 10) 
+            {
+                count = 0;
+                color[0] = randf();
+                color[1] = randf();
+                color[2] = randf();
+                color[3] = randf();
+            }
+
+            obj.updateAttribute(3, textureMatrixX);
+            obj.updateVSConstant(0, textureMatrixY);
+            obj.updatePSConstant(0, color);
 
             r = DirectX::XMMatrixMultiply(base, r);
             base.r[3] = DirectX::XMVectorMultiply(base.r[3], DirectX::XMVECTOR({ -1.0f, -1.0f, 0.0f, 1.0f }));
@@ -285,7 +381,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                g_scene->resize(width, height);
+                g_scene->resize(static_cast<float>(width), static_cast<float>(height));
                 if (!g_timer->started())
                 {
                     g_timer->start();

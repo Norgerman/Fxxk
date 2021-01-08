@@ -160,8 +160,12 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="D3DObject.h" />
-    <ClInclude Include="D3DScene.h" />
+    <ClInclude Include="D3DAttribute.hpp" />
+    <ClInclude Include="D3DConstant.h" />
+    <ClInclude Include="D3DData.h" />
+    <ClInclude Include="D3DGlobal.hpp" />
+    <ClInclude Include="D3DObject.hpp" />
+    <ClInclude Include="D3DScene.hpp" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -169,6 +173,10 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
     <ClInclude Include="Fxxk.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3DAttribute.cpp" />
+    <ClCompile Include="D3DConstant.cpp" />
+    <ClCompile Include="D3DData.cpp" />
+    <ClCompile Include="D3DGlobal.cpp" />
     <ClCompile Include="D3DObject.cpp" />
     <ClCompile Include="D3DScene.cpp" />
     <ClCompile Include="Fxxk.cpp" />

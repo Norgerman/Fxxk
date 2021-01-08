@@ -1,298 +1,200 @@
-#include <d3dcompiler.h>
 #include <WICTextureLoader.h>
-#include "D3DObject.h"
-#include "D3DScene.h"
-
-#pragma comment(lib, "d3dcompiler.lib" )
+#include "D3DObject.hpp"
+#include "D3DScene.hpp"
 
 using namespace std;
-
-const uint32_t vertexStride[] = { 3 * sizeof(float), 3 * sizeof(float), 2 * sizeof(float), sizeof(DirectX::XMMATRIX) };
-const uint32_t vertexOffset[] = { 0, 0, 0, 0};
-
-const D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
-    { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    { "MATRIX", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 0, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
-    { "MATRIX", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 16, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
-    { "MATRIX", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 32, D3D11_INPUT_PER_INSTANCE_DATA, 0 },
-    { "MATRIX", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 3, 48, D3D11_INPUT_PER_INSTANCE_DATA, 0 }
-};
-
-D3DObject::D3DObject(
-    initializer_list<float>&& vertices,
-    initializer_list<float>&& normals,
-    initializer_list<float>&& texcoord,
-    initializer_list<uint32_t>&& indices,
-    std::wstring&& vertexShader,
-    std::wstring&& pixelShader,
-    initializer_list<std::wstring>&& textureFiles,
-    D3D11_RASTERIZER_DESC&& rasterizerDesc,
-    initializer_list<D3D11_SAMPLER_DESC>&& samplerDesc,
-    D3D_PRIMITIVE_TOPOLOGY topopogy
-) :
-    m_indexBuffer(nullptr),
-    m_vertexBuffer{ { nullptr, nullptr, nullptr, nullptr } },
-    m_layout(nullptr),
-    m_vs(nullptr),
-    m_ps(nullptr),
-    m_rs(nullptr),
-    m_vertices(vertices),
-    m_normals(normals),
-    m_texcoord(texcoord),
-    m_incides(indices),
-    m_vertexShader(vertexShader),
-    m_pixelShader(pixelShader),
-    m_textureFiles(textureFiles),
-    m_rasterizerDesc(rasterizerDesc),
-    m_samplerDesc(samplerDesc),
-    m_topology(topopogy),
-    m_transform(DirectX::XMMatrixIdentity()),
-    m_inited(false),
-    m_matrixDirty(false)
-{
-}
-
-D3DObject::D3DObject(
-    std::vector<float>& vertices,
-    std::vector<float>& normals,
-    std::vector<float>& texcoord,
-    std::vector<uint32_t>& indices,
-    std::wstring&& vertexShader,
-    std::wstring&& pixelShader,
-    std::vector<std::wstring>&& textureFiles,
-    D3D11_RASTERIZER_DESC&& rasterizerDesc,
-    std::vector<D3D11_SAMPLER_DESC>& samplerDesc,
-    D3D_PRIMITIVE_TOPOLOGY topopogy
-) :
-    m_indexBuffer(nullptr),
-    m_vertexBuffer{ { nullptr, nullptr, nullptr, nullptr } },
-    m_layout(nullptr),
-    m_vs(nullptr),
-    m_ps(nullptr),
-    m_rs(nullptr),
-    m_vertices(vertices),
-    m_normals(normals),
-    m_texcoord(texcoord),
-    m_incides(indices),
-    m_vertexShader(vertexShader),
-    m_pixelShader(pixelShader),
-    m_textureFiles(textureFiles),
-    m_rasterizerDesc(rasterizerDesc),
-    m_samplerDesc(samplerDesc),
-    m_topology(topopogy),
-    m_transform(DirectX::XMMatrixIdentity()),
-    m_inited(false),
-    m_matrixDirty(false)
-{
-
-}
-
-D3DObject::D3DObject(
-    std::vector<float>&& vertices,
-    std::vector<float>&& normals,
-    std::vector<float>&& texcoord,
-    std::vector<uint32_t>&& indices,
-    std::wstring&& vertexShader,
-    std::wstring&& pixelShader,
-    std::vector<std::wstring>&& textureFiles,
-    D3D11_RASTERIZER_DESC&& rasterizerDesc,
-    std::vector<D3D11_SAMPLER_DESC>&& samplerDesc,
-    D3D_PRIMITIVE_TOPOLOGY topopogy
-) :
-    m_indexBuffer(nullptr),
-    m_vertexBuffer{ { nullptr, nullptr, nullptr, nullptr } },
-    m_layout(nullptr),
-    m_vs(nullptr),
-    m_ps(nullptr),
-    m_rs(nullptr),
-    m_vertices(vertices),
-    m_normals(normals),
-    m_texcoord(texcoord),
-    m_incides(indices),
-    m_vertexShader(vertexShader),
-    m_pixelShader(pixelShader),
-    m_textureFiles(textureFiles),
-    m_rasterizerDesc(rasterizerDesc),
-    m_samplerDesc(samplerDesc),
-    m_topology(topopogy),
-    m_transform(DirectX::XMMatrixIdentity()),
-    m_inited(false),
-    m_matrixDirty(false)
-{
-
-}
 
 void D3DObject::updateTransform(DirectX::XMMATRIX&& transform)
 {
     m_transform = transform;
-    m_matrixDirty = true;
+    m_transformDesc.updateData(&m_transform);
 }
 
 void D3DObject::updateTransform(DirectX::XMMATRIX& transform)
 {
     m_transform = transform;
-    m_matrixDirty = true;
+    m_transformDesc.updateData(&m_transform);
 }
 
-void D3DObject::updateTransform(D3DScene& scene)
+void D3DObject::uploadTransform(D3DScene& scene)
 {
-    if (m_matrixDirty)
+    m_transformDesc.upload(scene, m_transformBuffer);
+}
+
+void D3DObject::uploadVertexBuffer(D3DScene& scene)
+{
+    size_t i = 0;
+    for (auto& attr : m_attributes)
     {
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-        ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-        auto hr = scene.getContext()->Map(m_vertexBuffer[3], 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-        assert(SUCCEEDED(hr));
-        memcpy(mappedResource.pData, &m_transform, sizeof(m_transform));
-        scene.getContext()->Unmap(m_vertexBuffer[3], 0);
-        m_matrixDirty = false;
+        if (i < m_indexPosition)
+        {
+            attr.upload(scene, m_vertexBuffer[i]);
+        }
+        else if (i > m_indexPosition)
+        {
+            attr.upload(scene, m_vertexBuffer[i - 1]);
+        }
+        i++;
     }
 }
 
+void D3DObject::uploadConstantBuffer(D3DScene& scene)
+{
+    size_t i = 0;
+    for (auto& desc : m_vsConstants)
+    {
+        desc.upload(scene, m_vsConstantBuffer[i]);
+    }
+    for (auto& desc : m_psConstants)
+    {
+        desc.upload(scene, m_psConstantBuffer[i]);
+    }
+}
+
+void D3DObject::uploadIndex(D3DScene& scene)
+{
+    if (m_indexAttribute && m_indexBuffer)
+    {
+        m_indexAttribute->upload(scene, m_indexBuffer);
+    }
+}
 
 void D3DObject::render(D3DScene& scene)
 {
-    updateTransform(scene);
+    if (!m_inited)
+    {
+        return;
+    }
+
+    uploadTransform(scene);
+    uploadIndex(scene);
+    uploadVertexBuffer(scene);
+    uploadConstantBuffer(scene);
+
     scene.getContext()->RSSetState(m_rs);
-    scene.getContext()->PSSetSamplers(0, m_ss.size(), m_ss.data());
+    scene.getContext()->PSSetSamplers(0, static_cast<uint32_t>(m_ss.size()), m_ss.data());
+
+    if (m_blendState)
+    {
+        scene.getContext()->OMSetBlendState(m_blendState, nullptr, 0xffffffff);
+    }
+
     scene.getContext()->IASetPrimitiveTopology(m_topology);
     scene.getContext()->IASetInputLayout(m_layout);
-    scene.getContext()->IASetVertexBuffers(0, m_vertexBuffer.size(), m_vertexBuffer.data(), vertexStride, vertexOffset);
-    scene.getContext()->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    scene.getContext()->PSSetShaderResources(0, m_textureViews.size(), m_textureViews.data());
+    scene.getContext()->VSSetConstantBuffers(1, 1, &m_transformBuffer);
+    scene.getContext()->VSSetConstantBuffers(2, static_cast<uint32_t>(m_vsConstantBuffer.size()), m_vsConstantBuffer.data());
+    scene.getContext()->PSSetConstantBuffers(0, static_cast<uint32_t>(m_psConstantBuffer.size()), m_psConstantBuffer.data());
+    scene.getContext()->IASetVertexBuffers(0, static_cast<uint32_t>(m_vertexBuffer.size()), m_vertexBuffer.data(), m_strides.data(), m_offsets.data());
+    scene.getContext()->PSSetShaderResources(0, static_cast<uint32_t>(m_textureViews.size()), m_textureViews.data());
     scene.getContext()->VSSetShader(m_vs, NULL, 0);
     scene.getContext()->PSSetShader(m_ps, NULL, 0);
-    scene.getContext()->DrawIndexed(m_incides.size(), 0, 0);
+    
+    if (m_indexAttribute && m_indexBuffer)
+    {
+        scene.getContext()->IASetIndexBuffer(m_indexBuffer, m_indexAttribute->getFormat(), 0);
+        scene.getContext()->DrawIndexed(m_indexAttribute->getSize(), 0, m_indexAttribute->getOffset());
+    }
+    else if(m_firstAttribute)
+    {
+        scene.getContext()->Draw(m_firstAttribute->getSize(), 0);
+    }
 }
 
-void D3DObject::init(D3DScene& scene)
+void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelShader)
 {
-    ID3DBlob* vs = nullptr, * ps = nullptr, * error = nullptr;
-#if _DEBUG
-    auto compileFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
-#else
-    auto compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-#endif
-
-    auto hr = D3DCompileFromFile(
-        m_vertexShader.data(),
-        nullptr,
-        D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "main",
-        "vs_5_0",
-        compileFlags,
-        0,
-        &vs,
-        &error);
-    assert(SUCCEEDED(hr));
-
-    hr = D3DCompileFromFile(
-        m_pixelShader.data(),
-        nullptr,
-        D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "main",
-        "ps_5_0",
-        compileFlags,
-        0,
-        &ps,
-        &error);
-    assert(SUCCEEDED(hr));
-
-    hr = scene.getDevice()->CreateVertexShader(
-        vs->GetBufferPointer(),
-        vs->GetBufferSize(),
+    auto hr = scene.getDevice()->CreateVertexShader(
+        vertexShader.byteCode,
+        vertexShader.size,
         NULL,
         &m_vs);
     assert(SUCCEEDED(hr));
 
     hr = scene.getDevice()->CreatePixelShader(
-        ps->GetBufferPointer(),
-        ps->GetBufferSize(),
+        pixelShader.byteCode,
+        pixelShader.size,
         NULL,
         &m_ps);
 
     assert(SUCCEEDED(hr));
 
-    if (error) {
-        error->Release();
+    // create vertex and index buffer
+    D3D11_SUBRESOURCE_DATA sr = { 0 };
+    D3D11_BUFFER_DESC desc = {};
+    ID3D11Buffer* buffer = nullptr;
+    size_t idx = 0;
+    uint32_t solt = 0;
+    std::vector<D3D11_INPUT_ELEMENT_DESC> inputDesc;
+
+    for (auto& attr : m_attributes)
+    {
+        desc = attr.buildBufferDesc();
+        sr.pSysMem = attr.getData();
+        hr = scene.getDevice()->CreateBuffer(
+            &desc,
+            &sr,
+            &buffer);
+        
+        assert(SUCCEEDED(hr));
+
+        if (!m_indexBuffer && attr.isIndex())
+        {
+            m_indexAttribute = &attr;
+            m_indexBuffer = buffer;
+            m_indexPosition = idx;
+        }
+        else
+        {
+            m_vertexBuffer.push_back(buffer);
+            attr.appendLayout(solt, inputDesc);
+            m_strides.push_back(attr.getStride());
+            m_offsets.push_back(attr.getOffset());
+            solt++;
+        }
+        idx++;
     }
 
     hr = scene.getDevice()->CreateInputLayout(
-        inputElementDesc,
-        ARRAYSIZE(inputElementDesc),
-        vs->GetBufferPointer(),
-        vs->GetBufferSize(),
+        inputDesc.data(),
+        static_cast<uint32_t>(inputDesc.size()),
+        vertexShader.byteCode,
+        vertexShader.size,
         &m_layout);
 
-    ps->Release();
-    vs->Release();
-
     assert(SUCCEEDED(hr));
 
-
-    // create buffer
-    D3D11_SUBRESOURCE_DATA sr = { 0 };
-
-    D3D11_BUFFER_DESC vertexBufferDescr = {};
-    vertexBufferDescr.ByteWidth = sizeof(float) * m_vertices.size();
-    vertexBufferDescr.Usage = D3D11_USAGE_DEFAULT;
-    vertexBufferDescr.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    sr.pSysMem = m_vertices.data();
+    // create constant buffer
+    desc = m_transformDesc.buildBufferDesc();
+    sr.pSysMem = m_transformDesc.getData();
     hr = scene.getDevice()->CreateBuffer(
-        &vertexBufferDescr,
+        &desc,
         &sr,
-        &m_vertexBuffer[0]);
+        &buffer);
     assert(SUCCEEDED(hr));
+    m_transformBuffer = buffer;
 
-    D3D11_BUFFER_DESC normalBufferDescr = {};
-    normalBufferDescr.ByteWidth = sizeof(float) * m_normals.size();
-    normalBufferDescr.Usage = D3D11_USAGE_DEFAULT;
-    normalBufferDescr.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    sr.pSysMem = m_normals.data();
-    hr = scene.getDevice()->CreateBuffer(
-        &normalBufferDescr,
-        &sr,
-        &m_vertexBuffer[1]);
-    assert(SUCCEEDED(hr));
+    for (auto& constant : m_vsConstants)
+    {
+        desc = constant.buildBufferDesc();
+        sr.pSysMem = constant.getData();
+        hr = scene.getDevice()->CreateBuffer(
+            &desc,
+            &sr,
+            &buffer);
+        assert(SUCCEEDED(hr));
+        m_vsConstantBuffer.push_back(buffer);
+    }
 
-    D3D11_BUFFER_DESC texBufferDescr = {};
-    texBufferDescr.ByteWidth = sizeof(float) * m_texcoord.size();
-    texBufferDescr.Usage = D3D11_USAGE_DEFAULT;
-    texBufferDescr.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    sr.pSysMem = m_texcoord.data();
-    hr = scene.getDevice()->CreateBuffer(
-        &texBufferDescr,
-        &sr,
-        &m_vertexBuffer[2]);
-    assert(SUCCEEDED(hr));
-
-    D3D11_BUFFER_DESC matrixBufferDescr = {};
-    matrixBufferDescr.ByteWidth = sizeof(m_transform);
-    matrixBufferDescr.Usage = D3D11_USAGE_DYNAMIC;
-    matrixBufferDescr.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    matrixBufferDescr.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    sr.pSysMem = &m_transform;
-    hr = scene.getDevice()->CreateBuffer(
-        &matrixBufferDescr,
-        &sr,
-        &m_vertexBuffer[3]);
-    assert(SUCCEEDED(hr));
-
-    D3D11_BUFFER_DESC indexBufferDesc = { };
-    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    indexBufferDesc.ByteWidth = sizeof(uint32_t) * m_incides.size();
-    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    indexBufferDesc.CPUAccessFlags = 0;
-    indexBufferDesc.MiscFlags = 0;
-
-    sr.pSysMem = m_incides.data();
-
-    hr = scene.getDevice()->CreateBuffer(
-        &indexBufferDesc,
-        &sr,
-        &m_indexBuffer);
-    assert(SUCCEEDED(hr));
+    for (auto& constant : m_psConstants)
+    {
+        desc = constant.buildBufferDesc();
+        sr.pSysMem = constant.getData();
+        hr = scene.getDevice()->CreateBuffer(
+            &desc,
+            &sr,
+            &buffer);
+        assert(SUCCEEDED(hr));
+        m_psConstantBuffer.push_back(buffer);
+    }
 
     // load textures
     ID3D11Resource* texture = nullptr;
@@ -318,8 +220,36 @@ void D3DObject::init(D3DScene& scene)
         m_ss.push_back(sampleState);
     }
 
+    if (m_blendDesc)
+    {
+        hr = scene.getDevice()->CreateBlendState(m_blendDesc, &m_blendState);
+        assert(SUCCEEDED(hr));
+    }
+
     m_inited = true;
-    m_matrixDirty = false;
+}
+
+void D3DObject::updateAttribute(size_t index, const void* data)
+{
+    m_attributes[index].updateData(data);
+}
+
+void D3DObject::updateIndex(const void* data)
+{
+    if (m_indexAttribute) 
+    {
+        m_indexAttribute->updateData(data);
+    }
+}
+
+void D3DObject::updateVSConstant(size_t index, const void* data)
+{
+    m_vsConstants[index].updateData(data);
+}
+
+void D3DObject::updatePSConstant(size_t index, const void* data)
+{
+    m_psConstants[index].updateData(data);
 }
 
 void D3DObject::dispose()
@@ -353,7 +283,20 @@ void D3DObject::dispose()
         if (element)
         {
             element->Release();
-            element = nullptr;
+        }
+    }
+    for (auto& element : m_psConstantBuffer)
+    {
+        if (element)
+        {
+            element->Release();
+        }
+    }
+    for (auto& element : m_vsConstantBuffer)
+    {
+        if (element)
+        {
+            element->Release();
         }
     }
     for (auto& element : m_textures)
@@ -377,6 +320,9 @@ void D3DObject::dispose()
             element->Release();
         }
     }
+    m_vertexBuffer.clear();
+    m_psConstantBuffer.clear();
+    m_vsConstantBuffer.clear();
     m_textures.clear();
     m_textureViews.clear();
     m_ss.clear();
