@@ -144,6 +144,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         1.0f, 1.0f, 1.0f, 0.5f,
     };
 
+    // load textures
+    std::vector<ID3D11Resource*> textures;
+    std::vector<ID3D11ShaderResourceView*> textureViews;
+    std::vector<wstring> textureFiles = { s + L"\\a.png", s + L"\\b.png" };
+    ID3D11Resource* texture = nullptr;
+    ID3D11ShaderResourceView* textureView = nullptr;
+
+    for (auto& element : textureFiles)
+    {
+        hr = DirectX::CreateWICTextureFromFile(g_scene->getDevice(), element.data(), &texture, &textureView);
+        assert(SUCCEEDED(hr));
+        textures.push_back(texture);
+        textureViews.push_back(textureView);
+    }
+
     D3DObject obj(
         {
             D3DAttribute(vertices, sizeof(float), 12, "POS", sizeof(float) * 3, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT),
@@ -157,10 +172,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         },
         {
              D3DConstant(color, sizeof(float), 4)
-        },
-        {
-            s + L"\\a.png",
-            s + L"\\b.png"
         },
         {
             D3D11_FILL_MODE::D3D11_FILL_SOLID,
@@ -188,7 +199,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 .MaxLOD = D3D11_FLOAT32_MAX,
             }
         },
-        D3D_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        D3D_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+        textures,
+        textureViews
+    );
 
     float angle = 0;
     float scale = 1.0f;

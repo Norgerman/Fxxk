@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <initializer_list>
-#include <string>
 #include <cstdint>
 #include <d3d11.h>
 #include <DirectXMath.h>
@@ -32,17 +31,20 @@ public:
     template<
         typename T1 = std::vector<D3DAttribute>,
         typename T2 = std::vector<D3DConstant>,
-        typename T3 = std::vector<std::wstring>,
-        typename T4 = D3D11_RASTERIZER_DESC,
-        typename T5 = std::vector<D3D11_SAMPLER_DESC>>
+        typename T3 = D3D11_RASTERIZER_DESC,
+        typename T4 = std::vector<D3D11_SAMPLER_DESC>,
+        typename T5 = std::vector<ID3D11Resource*>,
+        typename T6 = std::vector<ID3D11ShaderResourceView*>
+    >
     D3DObject(
         T1&& attributes,
         T2&& vsConstants,
         T2&& psConstants,
-        T3&& textureFiles,
-        T4&& rasterizerDesc,
-        T5&& samplerDesc,
-        D3D_PRIMITIVE_TOPOLOGY topopogy
+        T3&& rasterizerDesc,
+        T4&& samplerDesc,
+        D3D_PRIMITIVE_TOPOLOGY topopogy,
+        T5&& textures = {},
+        T6&& textureViews = {}
     ) :
         m_indexBuffer(nullptr),
         m_transformBuffer(nullptr),
@@ -59,10 +61,11 @@ public:
         m_attributes(attributes),
         m_vsConstants(vsConstants),
         m_psConstants(psConstants),
-        m_textureFiles(textureFiles),
         m_rasterizerDesc(rasterizerDesc),
         m_samplerDesc(samplerDesc),
         m_topology(topopogy),
+        m_textures(textures),
+        m_textureViews(textureViews),
         m_transform(DirectX::XMMatrixIdentity()),
         m_inited(false)
     {
@@ -79,8 +82,16 @@ public:
     void enableBlend(D3DBlend&& blend);
     void init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelShader);
     void disableBlend();
-    void dispose();
+    void dispose(bool releaseTexture = true);
     ~D3DObject();
+    
+    template<typename T1 = std::vector<ID3D11Resource*>, typename T2 = std::vector<ID3D11ShaderResourceView*>>
+    void setTexture(T1&& textures, T2&& textureViews)
+    {
+        m_textures = textures;
+        m_textureViews = textureViews;
+    }
+
 private:
     void render(D3DScene& scene);
     void uploadTransform(D3DScene& scene);
@@ -108,7 +119,6 @@ private:
     std::vector<D3DConstant> m_vsConstants;
     std::vector<D3DConstant> m_psConstants;
     DirectX::XMMATRIX m_transform;
-    std::vector<std::wstring> m_textureFiles;
     D3D11_RASTERIZER_DESC m_rasterizerDesc;
     D3D_PRIMITIVE_TOPOLOGY m_topology;
     std::vector<D3D11_SAMPLER_DESC> m_samplerDesc;

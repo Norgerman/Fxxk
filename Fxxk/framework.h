@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <pathcch.h>
 #include <d3dcompiler.h>
+#include <WICTextureLoader.h>
 
 // C RunTime Header Files
 #include <cstdlib>

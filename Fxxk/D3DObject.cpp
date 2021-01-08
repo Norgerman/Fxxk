@@ -1,4 +1,3 @@
-#include <WICTextureLoader.h>
 #include "D3DObject.h"
 #include "D3DScene.h"
 
@@ -192,18 +191,6 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
         m_psConstantBuffer.push_back(buffer);
     }
 
-    // load textures
-    ID3D11Resource* texture = nullptr;
-    ID3D11ShaderResourceView* textureView = nullptr;
-
-    for (auto& element : m_textureFiles)
-    {
-        hr = DirectX::CreateWICTextureFromFile(scene.getDevice(), element.data(), &texture, &textureView);
-        assert(SUCCEEDED(hr));
-        m_textures.push_back(texture);
-        m_textureViews.push_back(textureView);
-    }
-
     hr = scene.getDevice()->CreateRasterizerState(&m_rasterizerDesc, &m_rs);
     assert(SUCCEEDED(hr));
 
@@ -277,7 +264,7 @@ const DirectX::XMMATRIX& D3DObject::getTransform() const
     return m_transform;
 }
 
-void D3DObject::dispose()
+void D3DObject::dispose(bool releaseTexture)
 {
     if (m_indexBuffer)
     {
@@ -308,6 +295,7 @@ void D3DObject::dispose()
     m_vs = nullptr;
     m_ps = nullptr;
     m_blendState = nullptr;
+    
     for (auto& element : m_vertexBuffer)
     {
         if (element)
@@ -329,20 +317,26 @@ void D3DObject::dispose()
             element->Release();
         }
     }
-    for (auto& element : m_textures)
+
+    if (releaseTexture) 
     {
-        if (element)
+
+        for (auto& element : m_textures)
         {
-            element->Release();
+            if (element)
+            {
+                element->Release();
+            }
+        }
+        for (auto& element : m_textureViews)
+        {
+            if (element)
+            {
+                element->Release();
+            }
         }
     }
-    for (auto& element : m_textureViews)
-    {
-        if (element)
-        {
-            element->Release();
-        }
-    }
+
     for (auto& element : m_ss)
     {
         if (element)
