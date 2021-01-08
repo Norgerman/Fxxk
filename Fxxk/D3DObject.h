@@ -48,7 +48,7 @@ public:
     ) :
         m_indexBuffer(nullptr),
         m_transformBuffer(nullptr),
-        m_firstAttribute(nullptr),
+        m_firstVertexAttribute(nullptr),
         m_indexAttribute(nullptr),
         m_indexPosition(-1),
         m_layout(nullptr),
@@ -103,7 +103,7 @@ private:
     ID3D11Buffer* m_indexBuffer;
     ID3D11Buffer* m_transformBuffer;
     D3DAttribute* m_indexAttribute;
-    D3DAttribute* m_firstAttribute;
+    D3DAttribute* m_firstVertexAttribute;
     D3DConstant m_transformDesc;
     ID3D11InputLayout* m_layout;
     ID3D11VertexShader* m_vs;

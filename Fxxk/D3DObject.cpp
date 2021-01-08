@@ -89,9 +89,9 @@ void D3DObject::render(D3DScene& scene)
         scene.getContext()->IASetIndexBuffer(m_indexBuffer, m_indexAttribute->getFormat(), 0);
         scene.getContext()->DrawIndexed(m_indexAttribute->getSize(), 0, m_indexAttribute->getOffset());
     }
-    else if (m_firstAttribute)
+    else if (m_firstVertexAttribute)
     {
-        scene.getContext()->Draw(m_firstAttribute->getSize(), 0);
+        scene.getContext()->Draw(m_firstVertexAttribute->getSize(), 0);
     }
 }
 
@@ -144,6 +144,11 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
             m_strides.push_back(attr.getStride());
             m_offsets.push_back(attr.getOffset());
             solt++;
+            
+            if (!m_firstVertexAttribute && attr.getInputSoltClass() == D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA)
+            {
+                m_firstVertexAttribute = &attr;
+            }
         }
         idx++;
     }
