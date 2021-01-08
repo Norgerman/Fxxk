@@ -127,6 +127,18 @@ void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
     m_swapChain->Present(1, 0);
 }
 
+void  D3DScene::render(std::vector<D3DObject*>& objs)
+{
+    m_context->ClearRenderTargetView(m_target, m_background.data());
+
+    for (auto obj : objs)
+    {
+        obj->render(*this);
+    }
+
+    m_swapChain->Present(1, 0);
+}
+
 ID3D11Device* D3DScene::getDevice() const
 {
     return this->m_device;

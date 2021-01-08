@@ -24,6 +24,7 @@ WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 D3DScene* g_scene;
 Timer* g_timer;
+std::function<void(void)> render([]() -> void {});
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -221,9 +222,58 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
+    render = [&obj, &w, &h, &scale, &count, &angle, &step, &textureMatrixX, &textureMatrixY, &color]() -> void
+    {
+        const auto& viewport = g_scene->getViewport();
+        scale += step;
+        angle += 1;
+        count++;
+
+        if (angle > 360)
+        {
+            angle -= 360;
+        }
+
+        if (scale > 1.0f || scale < 0.1)
+        {
+            step = -step;
+        }
+
+        auto r = DirectX::XMMatrixRotationZ(angle / 180 * M_PI);
+        auto base = DirectX::XMMatrixTranslation(-viewport.Width / 2, -viewport.Height / 2, 0.0f);
+
+        textureMatrixX[0] = scale;
+        textureMatrixY[5] = scale;
+
+        if (count == 10)
+        {
+            count = 0;
+            color[0] = randf();
+            color[1] = randf();
+            color[2] = randf();
+            color[3] = randf();
+        }
+
+        obj.updateAttribute(3, textureMatrixX);
+        obj.updateVSConstant(0, textureMatrixY);
+        obj.updatePSConstant(0, color);
+
+        r = DirectX::XMMatrixMultiply(base, r);
+        base.r[3] = DirectX::XMVectorMultiply(base.r[3], DirectX::XMVECTOR({ -1.0f, -1.0f, 0.0f, 1.0f }));
+        r = DirectX::XMMatrixMultiply(r, base);
+
+        auto s = DirectX::XMMatrixScaling(scale, scale, 1.0f);
+        auto t = DirectX::XMMatrixTranslation(viewport.Width / 2 - w * scale / 2, viewport.Height / 2 - h * scale / 2, 0.0f);
+
+        auto result = DirectX::XMMatrixMultiply(s, t);
+
+        obj.updateTransform(DirectX::XMMatrixMultiply(result, r));
+        g_scene->render({ &obj });
+    };
+
     g_timer = new Timer([&hwnd]() -> void
         {
-            PostMessage(hwnd, WM_TICK, 0, 0);
+            SendMessage(hwnd, WM_TICK, 0, 0);
         }, 16);
 
     g_timer->start();
@@ -235,55 +285,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
-        }
-
-        if (msg.message == WM_TICK)
-        {
-            const auto& viewport = g_scene->getViewport();
-            scale += step;
-            angle += 1;
-            count++;
-
-            if (angle > 360)
-            {
-                angle -= 360;
-            }
-
-            if (scale > 1.0f || scale < 0.1)
-            {
-                step = -step;
-            }
-
-            auto r = DirectX::XMMatrixRotationZ(angle / 180 * M_PI);
-            auto base = DirectX::XMMatrixTranslation(-viewport.Width / 2, -viewport.Height / 2, 0.0f);
-
-            textureMatrixX[0] = scale;
-            textureMatrixY[5] = scale;
-
-            if (count == 10)
-            {
-                count = 0;
-                color[0] = randf();
-                color[1] = randf();
-                color[2] = randf();
-                color[3] = randf();
-            }
-
-            obj.updateAttribute(3, textureMatrixX);
-            obj.updateVSConstant(0, textureMatrixY);
-            obj.updatePSConstant(0, color);
-
-            r = DirectX::XMMatrixMultiply(base, r);
-            base.r[3] = DirectX::XMVectorMultiply(base.r[3], DirectX::XMVECTOR({ -1.0f, -1.0f, 0.0f, 1.0f }));
-            r = DirectX::XMMatrixMultiply(r, base);
-
-            auto s = DirectX::XMMatrixScaling(scale, scale, 1.0f);
-            auto t = DirectX::XMMatrixTranslation(viewport.Width / 2 - w * scale / 2, viewport.Height / 2 - h * scale / 2, 0.0f);
-
-            auto result = DirectX::XMMatrixMultiply(s, t);
-
-            obj.updateTransform(DirectX::XMMatrixMultiply(result, r));
-            g_scene->render({ &obj });
         }
     }
 
@@ -410,6 +411,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
     case WM_TICK:
+        render();
         break;
     case WM_DESTROY:
         PostQuitMessage(0);
