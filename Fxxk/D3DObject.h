@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <d3d11.h>
 #include <DirectXMath.h>
-#include "D3DGlobal.hpp"
-#include "D3DAttribute.hpp"
+#include "D3DGlobal.h"
+#include "D3DAttribute.h"
 #include "D3DConstant.h"
 
 class D3DScene;

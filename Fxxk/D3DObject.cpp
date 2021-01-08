@@ -1,6 +1,6 @@
 #include <WICTextureLoader.h>
-#include "D3DObject.hpp"
-#include "D3DScene.hpp"
+#include "D3DObject.h"
+#include "D3DScene.h"
 
 using namespace std;
 

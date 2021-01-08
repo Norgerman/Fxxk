@@ -1,4 +1,4 @@
-#include "D3DAttribute.hpp"
+#include "D3DAttribute.h"
 
 
 D3DAttribute::D3DAttribute() : 

@@ -160,12 +160,12 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="D3DAttribute.hpp" />
+    <ClInclude Include="D3DAttribute.h" />
     <ClInclude Include="D3DConstant.h" />
     <ClInclude Include="D3DData.h" />
-    <ClInclude Include="D3DGlobal.hpp" />
-    <ClInclude Include="D3DObject.hpp" />
-    <ClInclude Include="D3DScene.hpp" />
+    <ClInclude Include="D3DGlobal.h" />
+    <ClInclude Include="D3DObject.h" />
+    <ClInclude Include="D3DScene.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />

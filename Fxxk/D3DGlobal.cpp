@@ -1,5 +1,5 @@
-#include "D3DGlobal.hpp"
-#include "D3DScene.hpp"
+#include "D3DGlobal.h"
+#include "D3DScene.h"
 
 DirectX::XMMATRIX D3DGlobal::project(D3DScene& scene)
 {

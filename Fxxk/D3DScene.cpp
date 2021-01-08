@@ -1,5 +1,5 @@
-#include "D3DScene.hpp"
-#include "D3DObject.hpp"
+#include "D3DScene.h"
+#include "D3DObject.h"
 
 #pragma comment(lib, "d3d11.lib")
 

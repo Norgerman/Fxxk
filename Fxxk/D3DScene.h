@@ -6,7 +6,7 @@
 #include <vector>
 #include <d3d11.h>
 #include <DirectXMath.h>
-#include "D3DGlobal.hpp"
+#include "D3DGlobal.h"
 
 class D3DObject;
 

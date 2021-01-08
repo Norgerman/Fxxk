@@ -1,5 +1,5 @@
 #include "D3DData.h"
-#include "D3DScene.hpp"
+#include "D3DScene.h"
 
 D3DData::D3DData() :
     D3DData(nullptr, 0, 0)

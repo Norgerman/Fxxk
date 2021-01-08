@@ -3,11 +3,11 @@
 
 #include "framework.h"
 #include "Fxxk.h"
-#include "D3DObject.hpp"
-#include "D3DScene.hpp"
-#include "Timer.hpp"
-#include "D3DAttribute.hpp"
+#include "D3DObject.h"
+#include "D3DScene.h"
+#include "D3DAttribute.h"
 #include "D3DConstant.h"
+#include "Timer.hpp"
 
 #pragma comment(lib, "pathcch.lib")
 #pragma comment(lib, "d3dcompiler.lib" )
