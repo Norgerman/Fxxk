@@ -68,14 +68,14 @@ public:
     {
         m_transformDesc = D3DConstant(&m_transform, 4, 16);
     }
+    void updateTransform(const DirectX::XMMATRIX& transform);
     void updateTransform(DirectX::XMMATRIX&& transform);
-    void updateTransform(DirectX::XMMATRIX& transform);
     const DirectX::XMMATRIX& getTransform() const;
     void updateAttribute(size_t index, const void* data);
     void updateVSConstant(size_t index, const void* data);
     void updatePSConstant(size_t index, const void* data);
     void updateIndex(const void* data);
-    void enableBlend(D3DBlend& blend);
+    void enableBlend(const D3DBlend& blend);
     void enableBlend(D3DBlend&& blend);
     void init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelShader);
     void disableBlend();

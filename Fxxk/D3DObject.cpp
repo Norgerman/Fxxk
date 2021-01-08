@@ -10,7 +10,7 @@ void D3DObject::updateTransform(DirectX::XMMATRIX&& transform)
     m_transformDesc.updateData(&m_transform);
 }
 
-void D3DObject::updateTransform(DirectX::XMMATRIX& transform)
+void D3DObject::updateTransform(const DirectX::XMMATRIX& transform)
 {
     m_transform = transform;
     m_transformDesc.updateData(&m_transform);
@@ -261,7 +261,7 @@ void D3DObject::updateBlend(D3DScene& scene)
     }
 }
 
-void D3DObject::enableBlend(D3DBlend& blend)
+void D3DObject::enableBlend(const D3DBlend& blend)
 {
     m_blend = blend;
     m_blendNeedUpdate = true;
