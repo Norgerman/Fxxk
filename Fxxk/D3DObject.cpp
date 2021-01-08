@@ -274,10 +274,15 @@ void D3DObject::dispose()
     {
         m_rs->Release();
     }
+    if (m_blendState)
+    {
+        m_blendState->Release();
+    }
     m_indexBuffer = nullptr;
     m_layout = nullptr;
     m_vs = nullptr;
     m_ps = nullptr;
+    m_blendState = nullptr;
     for (auto& element : m_vertexBuffer)
     {
         if (element)
