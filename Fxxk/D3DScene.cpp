@@ -79,7 +79,6 @@ void D3DScene::init(HWND hwnd)
 
 void D3DScene::resize(float width, float height)
 {
-    const std::lock_guard lock(m_mutex);
     if (m_inited)
     {
         m_context->OMSetRenderTargets(0, 0, 0);
@@ -118,7 +117,6 @@ void D3DScene::updateProjection()
 
 void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
 {
-    const std::lock_guard lock(m_mutex);
     m_context->ClearRenderTargetView(m_target, m_background.data());
 
     for (auto obj : objs)

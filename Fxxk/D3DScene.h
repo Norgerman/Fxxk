@@ -1,7 +1,6 @@
 #pragma once
 #include <initializer_list>
 #include <functional>
-#include <mutex>
 #include <array>
 #include <vector>
 #include <d3d11.h>
@@ -40,8 +39,7 @@ public:
         m_deviceFlags(deviceflags),
         m_features(features),
         m_buildProjection(buildProjection),
-        m_background(backgorund),
-        m_mutex()
+        m_background(backgorund)
     {
 
     }
@@ -68,5 +66,4 @@ private:
     D3D_DRIVER_TYPE m_driverType;
     uint32_t m_deviceFlags;
     bool m_inited;
-    std::mutex m_mutex;
 };

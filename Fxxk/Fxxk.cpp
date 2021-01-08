@@ -16,6 +16,7 @@
 
 using namespace std;
 
+constexpr auto WM_TICK = WM_USER + 1;
 // Global Variables:
 constexpr auto MAX_LOADSTRING = 100;
 HINSTANCE hInst;                                // current instance
@@ -220,7 +221,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
-    g_timer = new Timer([&obj, &w, &h, &angle, &scale, &textureMatrixX, &textureMatrixY, &color, &step, &count]() -> void
+    g_timer = new Timer([&hwnd]() -> void
+        {
+            PostMessage(hwnd, WM_TICK, 0, 0);
+        }, 16);
+
+    g_timer->start();
+
+    // Main message loop:
+    while (GetMessage(&msg, nullptr, 0, 0))
+    {
+        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        if (msg.message == WM_TICK)
         {
             const auto& viewport = g_scene->getViewport();
             scale += step;
@@ -267,17 +284,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
             obj.updateTransform(DirectX::XMMatrixMultiply(result, r));
             g_scene->render({ &obj });
-        }, 16);
-
-    g_timer->start();
-
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
         }
     }
 
@@ -403,6 +409,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
     }
     break;
+    case WM_TICK:
+        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
