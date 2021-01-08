@@ -261,6 +261,22 @@ void D3DObject::updateBlend(D3DScene& scene)
     }
 }
 
+void D3DObject::enableBlend(D3DBlend& blend)
+{
+    m_blend = blend;
+    m_blendNeedUpdate = true;
+}
+void D3DObject::enableBlend(D3DBlend&& blend)
+{
+    m_blend = blend;
+    m_blendNeedUpdate = true;
+}
+
+const DirectX::XMMATRIX& D3DObject::getTransform() const
+{
+    return m_transform;
+}
+
 void D3DObject::dispose()
 {
     if (m_indexBuffer)
