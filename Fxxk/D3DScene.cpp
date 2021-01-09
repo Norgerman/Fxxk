@@ -88,9 +88,9 @@ void D3DScene::resize(float x, float y, float w, float h)
         assert(SUCCEEDED(hr));
 
         hr = m_device->CreateRenderTargetView(pBuffer, NULL, &m_target);
-        assert(SUCCEEDED(hr));
-
         pBuffer->Release();
+
+        assert(SUCCEEDED(hr));
         
         m_viewport.TopLeftX = x;
         m_viewport.TopLeftY = y;
