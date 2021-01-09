@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <d3d11.h>
+#include <wrl\client.h>
 #include <DirectXMath.h>
 #include "D3DGlobal.h"
 
@@ -39,11 +40,10 @@ public:
     {
 
     }
-    void dispose();
     void resize(float x, float y, float w, float h);
     void init(HWND hwnd, float x, float y, float w, float h);
-    ID3D11Device* getDevice() const;
-    ID3D11DeviceContext* getContext() const;
+    Microsoft::WRL::ComPtr<ID3D11Device> getDevice() const;
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext> getContext() const;
     void updateProjection();
     const D3D11_VIEWPORT& getViewport() const;
     void render(std::initializer_list<D3DObject*>&& objs);
@@ -52,11 +52,11 @@ public:
 private:
     void resetState();
 
-    ID3D11Device* m_device;
-    ID3D11DeviceContext* m_context;
-    IDXGISwapChain* m_swapChain;
-    ID3D11RenderTargetView* m_target;
-    ID3D11Buffer* m_constantBuffer;
+    Microsoft::WRL::ComPtr<ID3D11Device> m_device;
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_context;
+    Microsoft::WRL::ComPtr<IDXGISwapChain> m_swapChain;
+    Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_target;
+    Microsoft::WRL::ComPtr<ID3D11Buffer> m_constantBuffer;
     DirectX::XMMATRIX m_projection;
     D3D11_VIEWPORT m_viewport;
     std::array<float, 4> m_background;

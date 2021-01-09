@@ -11,6 +11,7 @@
 #include <pathcch.h>
 #include <d3dcompiler.h>
 #include <WICTextureLoader.h>
+#include <wrl\client.h>
 
 // C RunTime Header Files
 #include <cstdlib>

@@ -1,8 +1,6 @@
 #include "D3DObject.h"
 #include "D3DScene.h"
 
-using namespace std;
-
 void D3DObject::updateTransform(DirectX::XMMATRIX&& transform)
 {
     m_transform = transform;
@@ -65,28 +63,66 @@ void D3DObject::render(D3DScene& scene)
         return;
     }
 
+    std::vector<ID3D11SamplerState*> samplers;
+    std::vector<ID3D11Buffer*> buffers;
+    std::vector<ID3D11ShaderResourceView*> shaderResources;
+
     uploadTransform(scene);
     uploadIndex(scene);
     uploadVertexBuffer(scene);
     uploadConstantBuffer(scene);
     updateBlend(scene);
 
-    scene.getContext()->RSSetState(m_rs);
-    scene.getContext()->PSSetSamplers(0, static_cast<uint32_t>(m_ss.size()), m_ss.data());
-    scene.getContext()->OMSetBlendState(m_blendState, m_blend.blendFactor, m_blend.sampleMask);
-    scene.getContext()->IASetPrimitiveTopology(m_topology);
-    scene.getContext()->IASetInputLayout(m_layout);
-    scene.getContext()->VSSetConstantBuffers(1, 1, &m_transformBuffer);
-    scene.getContext()->VSSetConstantBuffers(2, static_cast<uint32_t>(m_vsConstantBuffer.size()), m_vsConstantBuffer.data());
-    scene.getContext()->PSSetConstantBuffers(0, static_cast<uint32_t>(m_psConstantBuffer.size()), m_psConstantBuffer.data());
-    scene.getContext()->IASetVertexBuffers(0, static_cast<uint32_t>(m_vertexBuffer.size()), m_vertexBuffer.data(), m_strides.data(), m_offsets.data());
-    scene.getContext()->PSSetShaderResources(0, static_cast<uint32_t>(m_textureViews.size()), m_textureViews.data());
-    scene.getContext()->VSSetShader(m_vs, NULL, 0);
-    scene.getContext()->PSSetShader(m_ps, NULL, 0);
+    scene.getContext()->RSSetState(m_rs.Get());
 
-    if (m_indexAttribute && m_indexBuffer)
+    for (auto& samper : m_ss)
     {
-        scene.getContext()->IASetIndexBuffer(m_indexBuffer, m_indexAttribute->getFormat(), 0);
+        samplers.push_back(samper.Get());
+    }
+
+    for (auto& resource : m_textureViews)
+    {
+        shaderResources.push_back(resource.Get());
+    }
+
+    scene.getContext()->PSSetSamplers(0, static_cast<uint32_t>(m_ss.size()), samplers.data());
+    scene.getContext()->OMSetBlendState(m_blendState.Get(), m_blend.blendFactor, m_blend.sampleMask);
+    scene.getContext()->IASetPrimitiveTopology(m_topology);
+    scene.getContext()->IASetInputLayout(m_layout.Get());
+    scene.getContext()->PSSetShaderResources(0, static_cast<uint32_t>(m_textureViews.size()), shaderResources.data());
+    scene.getContext()->VSSetConstantBuffers(1, 1, m_transformBuffer.GetAddressOf());
+    
+    for (auto& buffer : m_vsConstantBuffer)
+    {
+        buffers.push_back(buffer.Get());
+    }
+
+    scene.getContext()->VSSetConstantBuffers(2, static_cast<uint32_t>(m_vsConstantBuffer.size()), buffers.data());
+
+    buffers.clear();
+
+    for (auto& buffer : m_psConstantBuffer)
+    {
+        buffers.push_back(buffer.Get());
+    }
+
+    scene.getContext()->PSSetConstantBuffers(0, static_cast<uint32_t>(m_psConstantBuffer.size()), buffers.data());
+    
+    buffers.clear();
+
+    for (auto& buffer : m_vertexBuffer)
+    {
+        buffers.push_back(buffer.Get());
+    }
+
+    scene.getContext()->IASetVertexBuffers(0, static_cast<uint32_t>(m_vertexBuffer.size()), buffers.data(), m_strides.data(), m_offsets.data());
+    
+    scene.getContext()->VSSetShader(m_vs.Get(), NULL, 0);
+    scene.getContext()->PSSetShader(m_ps.Get(), NULL, 0);
+
+    if (m_indexAttribute && m_indexBuffer != nullptr)
+    {
+        scene.getContext()->IASetIndexBuffer(m_indexBuffer.Get(), m_indexAttribute->getFormat(), 0);
         scene.getContext()->DrawIndexed(m_indexAttribute->getSize(), 0, m_indexAttribute->getOffset());
     }
     else if (m_firstVertexAttribute)
@@ -115,7 +151,7 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
     // create vertex and index buffer
     D3D11_SUBRESOURCE_DATA sr = { 0 };
     D3D11_BUFFER_DESC desc = {};
-    ID3D11Buffer* buffer = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11Buffer> buffer = nullptr;
     size_t idx = 0;
     uint32_t solt = 0;
     std::vector<D3D11_INPUT_ELEMENT_DESC> inputDesc;
@@ -199,7 +235,7 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
     hr = scene.getDevice()->CreateRasterizerState(&m_rasterizerDesc, &m_rs);
     assert(SUCCEEDED(hr));
 
-    ID3D11SamplerState* sampleState = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11SamplerState> sampleState = nullptr;
 
     for (auto& element : m_samplerDesc)
     {
@@ -213,9 +249,8 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
 
 void D3DObject::disableBlend()
 {
-    if (m_blendState)
+    if (m_blendState != nullptr)
     {
-        m_blendState->Release();
         m_blendState = nullptr;
     }
 }
@@ -269,95 +304,20 @@ const DirectX::XMMATRIX& D3DObject::getTransform() const
     return m_transform;
 }
 
-void D3DObject::dispose(bool releaseTexture)
+D3DObject::~D3DObject()
 {
-    if (m_indexBuffer)
-    {
-        m_indexBuffer->Release();
-    }
-    if (m_layout)
-    {
-        m_layout->Release();
-    }
-    if (m_vs)
-    {
-        m_vs->Release();
-    }
-    if (m_ps)
-    {
-        m_ps->Release();
-    }
-    if (m_rs)
-    {
-        m_rs->Release();
-    }
-    if (m_blendState)
-    {
-        m_blendState->Release();
-    }
     m_indexBuffer = nullptr;
+    m_transformBuffer = nullptr;
     m_layout = nullptr;
     m_vs = nullptr;
     m_ps = nullptr;
+    m_rs = nullptr;
     m_blendState = nullptr;
-    
-    for (auto& element : m_vertexBuffer)
-    {
-        if (element)
-        {
-            element->Release();
-        }
-    }
-    for (auto& element : m_psConstantBuffer)
-    {
-        if (element)
-        {
-            element->Release();
-        }
-    }
-    for (auto& element : m_vsConstantBuffer)
-    {
-        if (element)
-        {
-            element->Release();
-        }
-    }
 
-    if (releaseTexture) 
-    {
-
-        for (auto& element : m_textures)
-        {
-            if (element)
-            {
-                element->Release();
-            }
-        }
-        for (auto& element : m_textureViews)
-        {
-            if (element)
-            {
-                element->Release();
-            }
-        }
-    }
-
-    for (auto& element : m_ss)
-    {
-        if (element)
-        {
-            element->Release();
-        }
-    }
     m_vertexBuffer.clear();
     m_psConstantBuffer.clear();
     m_vsConstantBuffer.clear();
     m_textures.clear();
     m_textureViews.clear();
     m_ss.clear();
-}
-
-D3DObject::~D3DObject()
-{
-    this->dispose(false);
 }

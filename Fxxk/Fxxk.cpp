@@ -15,6 +15,7 @@
 #define M_PI acosf(-1.0)
 
 using namespace std;
+using namespace Microsoft::WRL;
 
 constexpr auto WM_TICK = WM_USER + 1;
 // Global Variables:
@@ -167,15 +168,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     };
 
     // load textures
-    std::vector<ID3D11Resource*> textures;
-    std::vector<ID3D11ShaderResourceView*> textureViews;
+    std::vector<ComPtr<ID3D11Resource>> textures;
+    std::vector<ComPtr<ID3D11ShaderResourceView>> textureViews;
     std::vector<wstring> textureFiles = { s + L"\\a.png", s + L"\\b.png" };
-    ID3D11Resource* texture = nullptr;
-    ID3D11ShaderResourceView* textureView = nullptr;
+    ComPtr<ID3D11Resource> texture = nullptr;
+    ComPtr<ID3D11ShaderResourceView> textureView = nullptr;
 
     for (auto& element : textureFiles)
     {
-        hr = DirectX::CreateWICTextureFromFile(g_scene->getDevice(), element.data(), &texture, &textureView);
+        hr = DirectX::CreateWICTextureFromFile(g_scene->getDevice().Get(), element.data(), &texture, &textureView);
         assert(SUCCEEDED(hr));
         textures.push_back(texture);
         textureViews.push_back(textureView);

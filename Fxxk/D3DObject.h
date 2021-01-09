@@ -4,13 +4,14 @@
 #include <cstdint>
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <wrl\client.h>
 #include "D3DGlobal.h"
 #include "D3DAttribute.h"
 #include "D3DConstant.h"
 
 class D3DScene;
 
-typedef struct D3DShader 
+typedef struct D3DShader
 {
     const void* byteCode;
     size_t size;
@@ -32,20 +33,20 @@ public:
         typename T1 = std::vector<D3DAttribute>,
         typename T2 = std::vector<D3DConstant>,
         typename T3 = D3D11_RASTERIZER_DESC,
-        typename T4 = std::vector<ID3D11Resource*>,
-        typename T5 = std::vector<ID3D11ShaderResourceView*>,
+        typename T4 = std::vector<Microsoft::WRL::ComPtr<ID3D11Resource>>,
+        typename T5 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>,
         typename T6 = std::vector<D3D11_SAMPLER_DESC>
     >
-    D3DObject(
-        T1&& attributes,
-        T2&& vsConstants,
-        T2&& psConstants,
-        D3D_PRIMITIVE_TOPOLOGY topopogy,
-        T3&& rasterizerDesc,
-        T4&& textures = {},
-        T5&& textureViews = {},
-        T6&& samplerDesc = {}
-    ) :
+        D3DObject(
+            T1&& attributes,
+            T2&& vsConstants,
+            T2&& psConstants,
+            D3D_PRIMITIVE_TOPOLOGY topopogy,
+            T3&& rasterizerDesc,
+            T4&& textures = {},
+            T5&& textureViews = {},
+            T6&& samplerDesc = {}
+        ) :
         m_indexBuffer(nullptr),
         m_transformBuffer(nullptr),
         m_firstVertexAttribute(nullptr),
@@ -82,10 +83,9 @@ public:
     void enableBlend(D3DBlend&& blend);
     void init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelShader);
     void disableBlend();
-    void dispose(bool releaseTexture = true);
     ~D3DObject();
-    
-    template<typename T1 = std::vector<ID3D11Resource*>, typename T2 = std::vector<ID3D11ShaderResourceView*>>
+
+    template<typename T1 = std::vector<Microsoft::WRL::ComPtr<ID3D11Resource>>, typename T2 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>>
     void setTexture(T1&& textures, T2&& textureViews)
     {
         m_textures = textures;
@@ -100,21 +100,22 @@ private:
     void uploadIndex(D3DScene& scene);
     void updateBlend(D3DScene& scene);
 
-    ID3D11Buffer* m_indexBuffer;
-    ID3D11Buffer* m_transformBuffer;
+    Microsoft::WRL::ComPtr<ID3D11Buffer> m_indexBuffer;
+    Microsoft::WRL::ComPtr<ID3D11Buffer> m_transformBuffer;
     D3DAttribute* m_indexAttribute;
     D3DAttribute* m_firstVertexAttribute;
     D3DConstant m_transformDesc;
-    ID3D11InputLayout* m_layout;
-    ID3D11VertexShader* m_vs;
-    ID3D11PixelShader* m_ps;
-    ID3D11RasterizerState* m_rs;
-    std::vector<ID3D11SamplerState*> m_ss;
-    std::vector<ID3D11Buffer*> m_vertexBuffer;
-    std::vector<ID3D11Buffer*> m_psConstantBuffer;
-    std::vector<ID3D11Buffer*> m_vsConstantBuffer;
-    std::vector<ID3D11Resource*> m_textures;
-    std::vector<ID3D11ShaderResourceView*> m_textureViews;
+    Microsoft::WRL::ComPtr<ID3D11InputLayout> m_layout;
+    Microsoft::WRL::ComPtr<ID3D11VertexShader> m_vs;
+    Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps;
+    Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_rs;
+    Microsoft::WRL::ComPtr<ID3D11BlendState> m_blendState;
+    std::vector<Microsoft::WRL::ComPtr<ID3D11SamplerState>> m_ss;
+    std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> m_vertexBuffer;
+    std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> m_psConstantBuffer;
+    std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> m_vsConstantBuffer;
+    std::vector<Microsoft::WRL::ComPtr<ID3D11Resource>> m_textures;
+    std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> m_textureViews;
     std::vector<D3DAttribute> m_attributes;
     std::vector<D3DConstant> m_vsConstants;
     std::vector<D3DConstant> m_psConstants;
@@ -126,7 +127,6 @@ private:
     std::vector<uint32_t> m_offsets;
     size_t m_indexPosition;
     D3DBlend m_blend;
-    ID3D11BlendState* m_blendState;
     bool m_blendNeedUpdate;
     bool m_inited;
 };

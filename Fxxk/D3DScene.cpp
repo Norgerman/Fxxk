@@ -77,7 +77,8 @@ void D3DScene::resize(float x, float y, float w, float h)
     if (m_inited)
     {
         m_context->OMSetRenderTargets(0, 0, 0);
-        m_target->Release();
+        m_target = nullptr;
+
         auto hr = m_swapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
         assert(SUCCEEDED(hr));
 
@@ -106,15 +107,15 @@ void D3DScene::updateProjection()
     m_projection = m_buildProjection(*this);
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-    auto hr = m_context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    auto hr = m_context->Map(m_constantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     assert(SUCCEEDED(hr));
     memcpy(mappedResource.pData, &m_projection, sizeof(m_projection));
-    m_context->Unmap(m_constantBuffer, 0);
+    m_context->Unmap(m_constantBuffer.Get(), 0);
 }
 
 void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
 {
-    m_context->ClearRenderTargetView(m_target, m_background.data());
+    m_context->ClearRenderTargetView(m_target.Get(), m_background.data());
 
     for (auto obj : objs)
     {
@@ -127,7 +128,7 @@ void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
 
 void  D3DScene::render(const std::vector<D3DObject*>& objs)
 {
-    m_context->ClearRenderTargetView(m_target, m_background.data());
+    m_context->ClearRenderTargetView(m_target.Get(), m_background.data());
 
     for (auto obj : objs)
     {
@@ -138,11 +139,11 @@ void  D3DScene::render(const std::vector<D3DObject*>& objs)
     m_swapChain->Present(1, 0);
 }
 
-ID3D11Device* D3DScene::getDevice() const
+Microsoft::WRL::ComPtr<ID3D11Device> D3DScene::getDevice() const
 {
     return this->m_device;
 }
-ID3D11DeviceContext* D3DScene::getContext() const
+Microsoft::WRL::ComPtr<ID3D11DeviceContext> D3DScene::getContext() const
 {
     return this->m_context;
 }
@@ -152,46 +153,19 @@ const D3D11_VIEWPORT& D3DScene::getViewport() const
     return this->m_viewport;
 }
 
-void D3DScene::dispose()
+void D3DScene::resetState()
 {
-    if (m_context)
-    {
-        m_context->ClearState();
-        m_context->Release();
-    }
-    if (m_swapChain)
-    {
-        m_swapChain->Release();
-    }
-    if (m_target)
-    {
-        m_target->Release();
-    }
-    if (m_constantBuffer)
-    {
-        m_constantBuffer->Release();
-    }
-    if (m_device)
-    {
-        m_device->Release();
-    }
+    m_context->ClearState();
+    m_context->OMSetRenderTargets(1, m_target.GetAddressOf(), NULL);
+    m_context->RSSetViewports(1, &m_viewport);
+    m_context->VSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
+}
 
+D3DScene::~D3DScene()
+{
     m_device = nullptr;
     m_context = nullptr;
     m_swapChain = nullptr;
     m_target = nullptr;
     m_constantBuffer = nullptr;
-}
-
-void D3DScene::resetState()
-{
-    m_context->ClearState();
-    m_context->OMSetRenderTargets(1, &m_target, NULL);
-    m_context->RSSetViewports(1, &m_viewport);
-    m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
-}
-
-D3DScene::~D3DScene()
-{
-    this->dispose();
 }
