@@ -44,8 +44,8 @@ public:
 
     }
     void dispose();
-    void resize(float width, float height);
-    void init(HWND hwnd);
+    void resize(float x, float y, float w, float h);
+    void init(HWND hwnd, float x, float y, float w, float h);
     ID3D11Device* getDevice() const;
     ID3D11DeviceContext* getContext() const;
     void updateProjection();

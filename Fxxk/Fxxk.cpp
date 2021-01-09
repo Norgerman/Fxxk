@@ -67,8 +67,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
+    RECT winRect;
+    GetClientRect(hwnd, &winRect);
+
     g_scene = new D3DScene();
-    g_scene->init(hwnd);
+    g_scene->init(hwnd, 0.0f, 0.0f, static_cast<float>(winRect.right - winRect.left), static_cast<float>(winRect.bottom - winRect.top));
 
     ID3DBlob* vs = nullptr, * ps = nullptr, * error = nullptr;
 #if _DEBUG
@@ -175,18 +178,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         {
              D3DConstant(color, sizeof(float), 4)
         },
-        {
-            D3D11_FILL_MODE::D3D11_FILL_SOLID,
-            D3D11_CULL_MODE::D3D11_CULL_BACK,
-            TRUE,
-            0,
-            0.0f,
-            0.0f,
-            TRUE,
-            FALSE,
-            FALSE,
-            FALSE
-        },
+        D3D_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+        D3DGlobal::defaultRasterizerState,
+        textures,
+        textureViews,
         {
             {
                 .Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR,
@@ -200,10 +195,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 .MinLOD = 0,
                 .MaxLOD = D3D11_FLOAT32_MAX,
             }
-        },
-        D3D_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-        textures,
-        textureViews
+        }
     );
 
     float angle = 0;
@@ -401,7 +393,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                g_scene->resize(static_cast<float>(width), static_cast<float>(height));
+                g_scene->resize(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
                 if (!g_timer->started())
                 {
                     g_timer->start();

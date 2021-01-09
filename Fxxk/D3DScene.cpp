@@ -3,7 +3,7 @@
 
 #pragma comment(lib, "d3d11.lib")
 
-void D3DScene::init(HWND hwnd)
+void D3DScene::init(HWND hwnd, float x, float y, float w, float h)
 {
     DXGI_SWAP_CHAIN_DESC swapChainDescr = { 0 };
     swapChainDescr.BufferDesc.RefreshRate.Denominator = 1;
@@ -49,11 +49,10 @@ void D3DScene::init(HWND hwnd)
 
     assert(SUCCEEDED(hr));
 
-    RECT winRect;
-    GetClientRect(hwnd, &winRect);
-
-    m_viewport.Width = static_cast<float>(winRect.right - winRect.left);
-    m_viewport.Height = static_cast<float>(winRect.bottom - winRect.top);
+    m_viewport.TopLeftX = x;
+    m_viewport.TopLeftY = y;
+    m_viewport.Width = w;
+    m_viewport.Height = h;
 
     this->m_constant = new VsConstant;
     m_constant->projection = m_buildProjection(*this);
@@ -73,11 +72,10 @@ void D3DScene::init(HWND hwnd)
     assert(SUCCEEDED(hr));
     m_context->RSSetViewports(1, &m_viewport);
     m_context->OMSetRenderTargets(1, &m_target, NULL);
-    m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
     m_inited = true;
 }
 
-void D3DScene::resize(float width, float height)
+void D3DScene::resize(float x, float y, float w, float h)
 {
     if (m_inited)
     {
@@ -95,10 +93,13 @@ void D3DScene::resize(float width, float height)
         assert(SUCCEEDED(hr));
 
         pBuffer->Release();
-        m_context->OMSetRenderTargets(1, &m_target, NULL);
-        m_viewport.Width = (float)width;
-        m_viewport.Height = (float)height;
+        
+        m_viewport.TopLeftX = x;
+        m_viewport.TopLeftY = y;
+        m_viewport.Width = w;
+        m_viewport.Height = h;
 
+        m_context->OMSetRenderTargets(1, &m_target, NULL);
         m_context->RSSetViewports(1, &m_viewport);
         updateProjection();
     }
@@ -118,6 +119,7 @@ void D3DScene::updateProjection()
 void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
 {
     m_context->ClearRenderTargetView(m_target, m_background.data());
+    m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 
     for (auto obj : objs)
     {
@@ -130,6 +132,7 @@ void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
 void  D3DScene::render(const std::vector<D3DObject*>& objs)
 {
     m_context->ClearRenderTargetView(m_target, m_background.data());
+    m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 
     for (auto obj : objs)
     {

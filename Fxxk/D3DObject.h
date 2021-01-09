@@ -32,19 +32,19 @@ public:
         typename T1 = std::vector<D3DAttribute>,
         typename T2 = std::vector<D3DConstant>,
         typename T3 = D3D11_RASTERIZER_DESC,
-        typename T4 = std::vector<D3D11_SAMPLER_DESC>,
-        typename T5 = std::vector<ID3D11Resource*>,
-        typename T6 = std::vector<ID3D11ShaderResourceView*>
+        typename T4 = std::vector<ID3D11Resource*>,
+        typename T5 = std::vector<ID3D11ShaderResourceView*>,
+        typename T6 = std::vector<D3D11_SAMPLER_DESC>
     >
     D3DObject(
         T1&& attributes,
         T2&& vsConstants,
         T2&& psConstants,
-        T3&& rasterizerDesc,
-        T4&& samplerDesc,
         D3D_PRIMITIVE_TOPOLOGY topopogy,
-        T5&& textures = {},
-        T6&& textureViews = {}
+        T3&& rasterizerDesc,
+        T4&& textures = {},
+        T5&& textureViews = {},
+        T6&& samplerDesc = {}
     ) :
         m_indexBuffer(nullptr),
         m_transformBuffer(nullptr),
