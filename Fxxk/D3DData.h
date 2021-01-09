@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <wrl/client.h>
+#include <wrl\client.h>
 #include <d3d11.h>
 
 class D3DScene;
