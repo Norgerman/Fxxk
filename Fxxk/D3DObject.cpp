@@ -91,7 +91,7 @@ void D3DObject::render(D3DScene& scene)
     scene.getContext()->IASetInputLayout(m_layout.Get());
     scene.getContext()->PSSetShaderResources(0, static_cast<uint32_t>(m_textureViews.size()), shaderResources.data());
     scene.getContext()->VSSetConstantBuffers(1, 1, m_transformBuffer.GetAddressOf());
-    
+
     for (auto& buffer : m_vsConstantBuffer)
     {
         buffers.push_back(buffer.Get());
@@ -107,7 +107,7 @@ void D3DObject::render(D3DScene& scene)
     }
 
     scene.getContext()->PSSetConstantBuffers(0, static_cast<uint32_t>(m_psConstantBuffer.size()), buffers.data());
-    
+
     buffers.clear();
 
     for (auto& buffer : m_vertexBuffer)
@@ -116,18 +116,19 @@ void D3DObject::render(D3DScene& scene)
     }
 
     scene.getContext()->IASetVertexBuffers(0, static_cast<uint32_t>(m_vertexBuffer.size()), buffers.data(), m_strides.data(), m_offsets.data());
-    
+
     scene.getContext()->VSSetShader(m_vs.Get(), NULL, 0);
     scene.getContext()->PSSetShader(m_ps.Get(), NULL, 0);
 
     if (m_indexAttribute && m_indexBuffer != nullptr)
     {
         scene.getContext()->IASetIndexBuffer(m_indexBuffer.Get(), m_indexAttribute->getFormat(), 0);
-        scene.getContext()->DrawIndexed(m_indexAttribute->getSize(), 0, m_indexAttribute->getOffset());
+        scene.getContext()->DrawIndexed((m_indexAttribute->getByteSize() - m_indexAttribute->getOffset()) / m_indexAttribute->getElementSize(),
+            m_indexAttribute->getOffset() / m_indexAttribute->getElementSize(), 0);
     }
     else if (m_firstVertexAttribute)
     {
-        scene.getContext()->Draw(m_firstVertexAttribute->getSize(), 0);
+        scene.getContext()->Draw((m_firstVertexAttribute->getByteSize() - m_firstVertexAttribute->getOffset()) / m_firstVertexAttribute->getStride(), 0);
     }
 }
 
@@ -180,7 +181,7 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
             m_strides.push_back(attr.getStride());
             m_offsets.push_back(attr.getOffset());
             solt++;
-            
+
             if (!m_firstVertexAttribute && attr.getInputSoltClass() == D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA)
             {
                 m_firstVertexAttribute = &attr;
@@ -280,7 +281,7 @@ void D3DObject::updatePSConstant(size_t index, const void* data)
 
 void D3DObject::updateBlend(D3DScene& scene)
 {
-    if (m_blendNeedUpdate) 
+    if (m_blendNeedUpdate)
     {
         disableBlend();
         scene.getDevice()->CreateBlendState(&m_blend.desc, &m_blendState);
