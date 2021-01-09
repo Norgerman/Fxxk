@@ -127,7 +127,7 @@ void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
     m_swapChain->Present(1, 0);
 }
 
-void  D3DScene::render(std::vector<D3DObject*>& objs)
+void  D3DScene::render(const std::vector<D3DObject*>& objs)
 {
     m_context->ClearRenderTargetView(m_target, m_background.data());
 

@@ -51,7 +51,7 @@ public:
     void updateProjection();
     const D3D11_VIEWPORT& getViewport() const;
     void render(std::initializer_list<D3DObject*>&& objs);
-    void render(std::vector<D3DObject*>& objs);
+    void render(const std::vector<D3DObject*>& objs);
     ~D3DScene();
 private:
     ID3D11Device* m_device;
