@@ -96,8 +96,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)\
-COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
+      <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)
+COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -117,8 +117,8 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)\
-COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
+      <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)
+COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -134,8 +134,8 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)\
-COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
+      <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)
+COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,8 +155,8 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)\
-COPY /Y $(ProjectDir)*.png $(TargetDir)\</Command>
+      <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)
+COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
