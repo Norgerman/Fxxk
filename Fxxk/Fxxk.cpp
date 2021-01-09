@@ -37,6 +37,23 @@ inline float randf()
     return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
 
+inline DirectX::XMMATRIX transform(float angle, float scale, float w, float h)
+{
+    const auto& viewport = g_scene->getViewport();
+    auto r = DirectX::XMMatrixRotationZ(angle / 180 * M_PI);
+    auto base = DirectX::XMMatrixTranslation(-viewport.Width / 2, -viewport.Height / 2, 0.0f);
+    r = DirectX::XMMatrixMultiply(base, r);
+    base.r[3] = DirectX::XMVectorMultiply(base.r[3], DirectX::XMVECTOR({ -1.0f, -1.0f, 0.0f, 1.0f }));
+    r = DirectX::XMMatrixMultiply(r, base);
+
+    auto s = DirectX::XMMatrixScaling(scale, scale, 1.0f);
+    auto t = DirectX::XMMatrixTranslation(viewport.Width / 2 - w * scale / 2, viewport.Height / 2 - h * scale / 2, 0.0f);
+
+    auto result = DirectX::XMMatrixMultiply(s, t);
+
+    return DirectX::XMMatrixMultiply(result, r);
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
     _In_ LPWSTR    lpCmdLine,
@@ -198,14 +215,53 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     );
 
+    std::reverse(textures.begin(), textures.end());
+    std::reverse(textureViews.begin(), textureViews.end());
+
+    D3DObject obj2(
+        {
+            D3DAttribute(vertices, sizeof(float), 12, "POS", sizeof(float) * 3, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT),
+            D3DAttribute(normals, sizeof(float), 12, "NORMAL", sizeof(float) * 3, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT),
+            D3DAttribute(texcoords, sizeof(float), 8, "TEXCOORD", sizeof(float) * 2, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32G32_FLOAT),
+            D3DAttribute(textureMatrixX, sizeof(float), 9, "TEXMATRIX", sizeof(float) * 9, 0, D3D11_BIND_FLAG::D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_FLAG::D3D11_CPU_ACCESS_WRITE, DXGI_FORMAT::DXGI_FORMAT_R32G32B32_FLOAT, D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_INSTANCE_DATA, 3),
+            D3DAttribute(indices, sizeof(uint32_t), 6, "INDICES", sizeof(uint32_t) * 2, 0, D3D11_BIND_FLAG::D3D11_BIND_INDEX_BUFFER, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R32_UINT),
+        },
+        {
+            D3DConstant(textureMatrixY, sizeof(float), 12),
+            D3DConstant(color, sizeof(float), 4)
+        },
+        {
+             D3DConstant(color, sizeof(float), 4)
+        },
+        D3D_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+        D3DGlobal::defaultRasterizerState,
+        textures,
+        textureViews,
+        {
+            {
+                .Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+                .AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
+                .AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
+                .AddressW = D3D11_TEXTURE_ADDRESS_WRAP,
+                .MipLODBias = 0.0f,
+                .MaxAnisotropy = 1,
+                .ComparisonFunc = D3D11_COMPARISON_ALWAYS,
+                .BorderColor = { 0, 0, 0, 0},
+                .MinLOD = 0,
+                .MaxLOD = D3D11_FLOAT32_MAX,
+            }
+        }
+    );
+
     float angle = 0;
     float scale = 1.0f;
     float step = 0.01f;
     uint8_t count = 0;
 
     obj.updateTransform(DirectX::XMMatrixTranslation(g_scene->getViewport().Width / 2 - w / 2, g_scene->getViewport().Height / 2 - h / 2, 0.0f));
-
+    obj2.updateTransform(DirectX::XMMatrixTranslation(g_scene->getViewport().Width / 2 - w / 2, g_scene->getViewport().Height / 2 - h / 2, 0.0f));
     obj.init(*g_scene, { vs->GetBufferPointer(), vs->GetBufferSize() }, { ps->GetBufferPointer(), ps->GetBufferSize() });
+    obj2.init(*g_scene, { vs->GetBufferPointer(), vs->GetBufferSize() }, { ps->GetBufferPointer(), ps->GetBufferSize() });
 
     ps->Release();
     vs->Release();
@@ -214,9 +270,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     MSG msg;
 
-    render = [&obj, &w, &h, &scale, &count, &angle, &step, &textureMatrixX, &textureMatrixY, &color]() -> void
+    render = [&obj, &obj2, &w, &h, &scale, &count, &angle, &step, &textureMatrixX, &textureMatrixY, &color]() -> void
     {
-        const auto& viewport = g_scene->getViewport();
         scale += step;
         angle += 1;
         count++;
@@ -231,8 +286,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             step = -step;
         }
 
-        auto r = DirectX::XMMatrixRotationZ(angle / 180 * M_PI);
-        auto base = DirectX::XMMatrixTranslation(-viewport.Width / 2, -viewport.Height / 2, 0.0f);
 
         textureMatrixX[0] = scale;
         textureMatrixY[5] = scale;
@@ -249,18 +302,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         obj.updateAttribute(3, textureMatrixX);
         obj.updateVSConstant(0, textureMatrixY);
         obj.updatePSConstant(0, color);
+        obj2.updateAttribute(3, textureMatrixX);
+        obj2.updateVSConstant(0, textureMatrixY);
+        obj2.updatePSConstant(0, color);
 
-        r = DirectX::XMMatrixMultiply(base, r);
-        base.r[3] = DirectX::XMVectorMultiply(base.r[3], DirectX::XMVECTOR({ -1.0f, -1.0f, 0.0f, 1.0f }));
-        r = DirectX::XMMatrixMultiply(r, base);
-
-        auto s = DirectX::XMMatrixScaling(scale, scale, 1.0f);
-        auto t = DirectX::XMMatrixTranslation(viewport.Width / 2 - w * scale / 2, viewport.Height / 2 - h * scale / 2, 0.0f);
-
-        auto result = DirectX::XMMatrixMultiply(s, t);
-
-        obj.updateTransform(DirectX::XMMatrixMultiply(result, r));
-        g_scene->render({ &obj });
+        obj.updateTransform(transform(angle, scale, w, h));
+        obj2.updateTransform(transform(angle * 2, scale, w, h));
+        g_scene->render({ &obj, &obj2 });
     };
 
     g_timer = new Timer([&hwnd]() -> void

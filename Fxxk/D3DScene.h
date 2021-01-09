@@ -9,10 +9,6 @@
 
 class D3DObject;
 
-typedef struct VsConstant {
-    DirectX::XMMATRIX projection;
-} VsConstant;
-
 class D3DScene
 {
 public:
@@ -32,7 +28,7 @@ public:
         m_swapChain(nullptr),
         m_target(nullptr),
         m_constantBuffer(nullptr),
-        m_constant(nullptr),
+        m_projection(DirectX::XMMatrixIdentity()),
         m_inited(false),
         m_viewport({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f }),
         m_driverType(driverType),
@@ -54,12 +50,14 @@ public:
     void render(const std::vector<D3DObject*>& objs);
     ~D3DScene();
 private:
+    void resetState();
+
     ID3D11Device* m_device;
     ID3D11DeviceContext* m_context;
     IDXGISwapChain* m_swapChain;
     ID3D11RenderTargetView* m_target;
     ID3D11Buffer* m_constantBuffer;
-    VsConstant* m_constant;
+    DirectX::XMMATRIX m_projection;
     D3D11_VIEWPORT m_viewport;
     std::array<float, 4> m_background;
     std::function<DirectX::XMMATRIX(D3DScene&)> m_buildProjection;

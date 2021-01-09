@@ -1,11 +1,5 @@
 #include "D3DAttribute.h"
 
-
-D3DAttribute::D3DAttribute() : 
-    D3DAttribute(nullptr, 0, 0, "", 0, 0, 0, D3D11_USAGE::D3D11_USAGE_DEFAULT, 0, DXGI_FORMAT::DXGI_FORMAT_R8_UINT)
-{
-
-}
 uint32_t D3DAttribute::getStride() const
 {
     return m_stride;

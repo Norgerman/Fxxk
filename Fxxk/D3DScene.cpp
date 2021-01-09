@@ -54,24 +54,21 @@ void D3DScene::init(HWND hwnd, float x, float y, float w, float h)
     m_viewport.Width = w;
     m_viewport.Height = h;
 
-    this->m_constant = new VsConstant;
-    m_constant->projection = m_buildProjection(*this);
+    m_projection = m_buildProjection(*this);
 
     D3D11_SUBRESOURCE_DATA sr = { 0 };
     D3D11_BUFFER_DESC cbDesc = { };
-    cbDesc.ByteWidth = sizeof(VsConstant);
+    cbDesc.ByteWidth = sizeof(m_projection);
     cbDesc.Usage = D3D11_USAGE_DYNAMIC;
     cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     cbDesc.MiscFlags = 0;
     cbDesc.StructureByteStride = 0;
-    sr.pSysMem = m_constant;
+    sr.pSysMem = &m_projection;
     hr = m_device->CreateBuffer(&cbDesc, &sr,
         &m_constantBuffer);
 
     assert(SUCCEEDED(hr));
-    m_context->RSSetViewports(1, &m_viewport);
-    m_context->OMSetRenderTargets(1, &m_target, NULL);
     m_inited = true;
 }
 
@@ -99,30 +96,29 @@ void D3DScene::resize(float x, float y, float w, float h)
         m_viewport.Width = w;
         m_viewport.Height = h;
 
-        m_context->OMSetRenderTargets(1, &m_target, NULL);
-        m_context->RSSetViewports(1, &m_viewport);
+       
         updateProjection();
     }
 }
 
 void D3DScene::updateProjection()
 {
-    m_constant->projection = m_buildProjection(*this);
+    m_projection = m_buildProjection(*this);
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
     auto hr = m_context->Map(m_constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
     assert(SUCCEEDED(hr));
-    memcpy(mappedResource.pData, m_constant, sizeof(*m_constant));
+    memcpy(mappedResource.pData, &m_projection, sizeof(m_projection));
     m_context->Unmap(m_constantBuffer, 0);
 }
 
 void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
 {
     m_context->ClearRenderTargetView(m_target, m_background.data());
-    m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 
     for (auto obj : objs)
     {
+        resetState();
         obj->render(*this);
     }
 
@@ -132,10 +128,10 @@ void D3DScene::render(std::initializer_list<D3DObject*>&& objs)
 void  D3DScene::render(const std::vector<D3DObject*>& objs)
 {
     m_context->ClearRenderTargetView(m_target, m_background.data());
-    m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 
     for (auto obj : objs)
     {
+        resetState();
         obj->render(*this);
     }
 
@@ -158,12 +154,9 @@ const D3D11_VIEWPORT& D3DScene::getViewport() const
 
 void D3DScene::dispose()
 {
-    if (m_device)
-    {
-        m_device->Release();
-    }
     if (m_context)
     {
+        m_context->ClearState();
         m_context->Release();
     }
     if (m_swapChain)
@@ -178,13 +171,24 @@ void D3DScene::dispose()
     {
         m_constantBuffer->Release();
     }
-    delete m_constant;
+    if (m_device)
+    {
+        m_device->Release();
+    }
+
     m_device = nullptr;
     m_context = nullptr;
     m_swapChain = nullptr;
     m_target = nullptr;
     m_constantBuffer = nullptr;
-    m_constant = nullptr;
+}
+
+void D3DScene::resetState()
+{
+    m_context->ClearState();
+    m_context->OMSetRenderTargets(1, &m_target, NULL);
+    m_context->RSSetViewports(1, &m_viewport);
+    m_context->VSSetConstantBuffers(0, 1, &m_constantBuffer);
 }
 
 D3DScene::~D3DScene()

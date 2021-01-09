@@ -359,5 +359,5 @@ void D3DObject::dispose(bool releaseTexture)
 
 D3DObject::~D3DObject()
 {
-    this->dispose();
+    this->dispose(false);
 }
