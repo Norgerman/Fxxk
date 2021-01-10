@@ -3,7 +3,7 @@
 
 void D3DObject::updateTransform(DirectX::XMMATRIX&& transform)
 {
-    m_transform = transform;
+    m_transform = std::forward<DirectX::XMMATRIX>(transform);
     m_transformDesc.updateData(&m_transform);
 }
 
