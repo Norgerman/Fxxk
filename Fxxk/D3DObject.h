@@ -59,14 +59,14 @@ public:
         m_blendState(nullptr),
         m_blendNeedUpdate(false),
         m_blend({ {}, { 0 }, 0xffffffff }),
-        m_attributes(attributes),
-        m_vsConstants(vsConstants),
-        m_psConstants(psConstants),
-        m_rasterizerDesc(rasterizerDesc),
-        m_samplerDesc(samplerDesc),
+        m_attributes(std::forward<T1>(attributes)),
+        m_vsConstants(std::forward<T2>(vsConstants)),
+        m_psConstants(std::forward<T2>(psConstants)),
+        m_rasterizerDesc(std::forward<T3>(rasterizerDesc)),
         m_topology(topopogy),
-        m_textures(textures),
-        m_textureViews(textureViews),
+        m_textures(std::forward<T4>(textures)),
+        m_textureViews(std::forward<T5>(textureViews)),
+        m_samplerDesc(std::forward<T6>(samplerDesc)),
         m_transform(DirectX::XMMatrixIdentity()),
         m_inited(false)
     {
@@ -88,8 +88,8 @@ public:
     template<typename T1 = std::vector<Microsoft::WRL::ComPtr<ID3D11Resource>>, typename T2 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>>
     void setTexture(T1&& textures, T2&& textureViews)
     {
-        m_textures = textures;
-        m_textureViews = textureViews;
+        m_textures = std::forward<T1>(textures);
+        m_textureViews = std::forward<T2>(textureViews);
     }
 
 private:

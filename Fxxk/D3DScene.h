@@ -23,7 +23,7 @@ public:
     }
    
     template<typename T1 = std::vector<D3D_FEATURE_LEVEL>, typename T2 = std::array<float, 4>, typename T3 = std::function<DirectX::XMMATRIX(D3DScene&)>>
-    D3DScene(D3D_DRIVER_TYPE driverType, uint32_t deviceflags, T1&& features, T2&& backgorund, T3& buildProjection):
+    D3DScene(D3D_DRIVER_TYPE driverType, uint32_t deviceflags, T1&& features, T2&& backgorund, T3&& buildProjection):
         m_device(nullptr),
         m_context(nullptr),
         m_swapChain(nullptr),
@@ -34,9 +34,9 @@ public:
         m_viewport({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f }),
         m_driverType(driverType),
         m_deviceFlags(deviceflags),
-        m_features(features),
-        m_buildProjection(buildProjection),
-        m_background(backgorund)
+        m_features(std::forward<T1>(features)),
+        m_background(std::forward<T2>(backgorund)),
+        m_buildProjection(std::forward<T3>(buildProjection))
     {
 
     }

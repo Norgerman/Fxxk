@@ -31,7 +31,7 @@ public:
         uint32_t instanceDataStepRate = 0
         ):
         D3DData(data, elementSize, size),
-        m_semanticName(semanticName),
+        m_semanticName(std::forward<T>(semanticName)),
         m_stride(stride),
         m_offset(offset),
         m_bindFlags(bindFlags),
