@@ -7,7 +7,6 @@
 #include "D3DScene.h"
 #include "D3DAttribute.h"
 #include "D3DConstant.h"
-#include "Timer.hpp"
 
 #pragma comment(lib, "pathcch.lib")
 #pragma comment(lib, "d3dcompiler.lib" )
@@ -17,15 +16,12 @@
 using namespace std;
 using namespace Microsoft::WRL;
 
-constexpr auto WM_TICK = WM_USER + 1;
 // Global Variables:
 constexpr auto MAX_LOADSTRING = 100;
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 D3DScene* g_scene;
-Timer* g_timer;
-std::function<void(void)> render([]() -> void {});
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -288,63 +284,54 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT1));
 
-    MSG msg;
+    MSG msg = {};
 
-    render = [&obj, &obj2, &w, &h, &scale, &count, &angle, &step, &textureMatrixX, &textureMatrixY, &color]() -> void
+    while (WM_QUIT != msg.message)
     {
-        scale += step;
-        angle += 1;
-        count++;
-
-        if (angle > 360)
-        {
-            angle -= 360;
-        }
-
-        if (scale > 1.0f || scale < 0.1)
-        {
-            step = -step;
-        }
-
-
-        textureMatrixX[0] = scale;
-        textureMatrixY[5] = scale;
-
-        if (count == 10)
-        {
-            count = 0;
-            color[0] = randf();
-            color[1] = randf();
-            color[2] = randf();
-            color[3] = randf();
-        }
-
-        obj.updateAttribute(3, textureMatrixX);
-        obj.updateVSConstant(0, textureMatrixY);
-        obj.updatePSConstant(0, color);
-        obj2.updateAttribute(3, textureMatrixX);
-        obj2.updateVSConstant(0, textureMatrixY);
-        obj2.updatePSConstant(0, color);
-
-        obj.updateTransform(transform(angle, scale, w, h));
-        obj2.updateTransform(transform(angle * 2, scale, w, h));
-        g_scene->render({ &obj, &obj2 });
-    };
-
-    g_timer = new Timer([&hwnd]() -> void
-        {
-            SendMessage(hwnd, WM_TICK, 0, 0);
-        }, 16);
-
-    g_timer->start();
-
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
+        }
+        else
+        {
+            scale += step;
+            angle += 1;
+            count++;
+
+            if (angle > 360)
+            {
+                angle -= 360;
+            }
+
+            if (scale > 1.0f || scale < 0.1)
+            {
+                step = -step;
+            }
+
+
+            textureMatrixX[0] = scale;
+            textureMatrixY[5] = scale;
+
+            if (count == 10)
+            {
+                count = 0;
+                color[0] = randf();
+                color[1] = randf();
+                color[2] = randf();
+                color[3] = randf();
+            }
+
+            obj.updateAttribute(3, textureMatrixX);
+            obj.updateVSConstant(0, textureMatrixY);
+            obj.updatePSConstant(0, color);
+            obj2.updateAttribute(3, textureMatrixX);
+            obj2.updateVSConstant(0, textureMatrixY);
+            obj2.updatePSConstant(0, color);
+
+            obj.updateTransform(transform(angle, scale, w, h));
+            obj2.updateTransform(transform(angle * 2, scale, w, h));
+            g_scene->render({ &obj, &obj2 });
         }
     }
 
@@ -417,7 +404,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND& hwnd)
     }
 
     ShowWindow(hWnd, nCmdShow);
-    UpdateWindow(hWnd);
+    //UpdateWindow(hWnd);
 
     hwnd = hWnd;
 
@@ -472,22 +459,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             UINT height = HIWORD(lParam);
             if (width == 0 || height == 0)
             {
-                g_timer->stop();
             }
             else
             {
                 g_scene->resize(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
-                if (!g_timer->started())
-                {
-                    g_timer->start();
-                }
             }
         }
     }
     break;
-    case WM_TICK:
-        render();
-        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
