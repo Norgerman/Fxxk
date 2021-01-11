@@ -71,7 +71,6 @@ void D3DObject::render(D3DScene& scene)
     uploadIndex(scene);
     uploadVertexBuffer(scene);
     uploadConstantBuffer(scene);
-    updateBlend(scene);
 
     scene.getContext()->RSSetState(m_rs.Get());
 
@@ -86,7 +85,7 @@ void D3DObject::render(D3DScene& scene)
     }
 
     scene.getContext()->PSSetSamplers(0, static_cast<uint32_t>(m_ss.size()), samplers.data());
-    scene.getContext()->OMSetBlendState(m_blendState.Get(), m_blend.blendFactor, m_blend.sampleMask);
+    scene.getContext()->OMSetBlendState(m_blendState.Get(), m_blendFactor, m_sampleMask);
     scene.getContext()->IASetPrimitiveTopology(m_topology);
     scene.getContext()->IASetInputLayout(m_layout.Get());
     scene.getContext()->PSSetShaderResources(0, static_cast<uint32_t>(m_textureViews.size()), shaderResources.data());
@@ -132,7 +131,7 @@ void D3DObject::render(D3DScene& scene)
     }
 }
 
-void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelShader)
+void D3DObject::init(D3DScene& scene, D3DShader& vertexShader, D3DShader& pixelShader)
 {
     auto hr = scene.getDevice()->CreateVertexShader(
         vertexShader.byteCode,
@@ -233,19 +232,12 @@ void D3DObject::init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelSha
         m_psConstantBuffer.push_back(buffer);
     }
 
-    hr = scene.getDevice()->CreateRasterizerState(&m_rasterizerDesc, &m_rs);
-    assert(SUCCEEDED(hr));
-
-    Microsoft::WRL::ComPtr<ID3D11SamplerState> sampleState = nullptr;
-
-    for (auto& element : m_samplerDesc)
-    {
-        hr = scene.getDevice()->CreateSamplerState(&element, &sampleState);
-        assert(SUCCEEDED(hr));
-        m_ss.push_back(sampleState);
-    }
-
     m_inited = true;
+}
+
+void D3DObject::init(D3DScene& scene, D3DShader&& vertexShader, D3DShader&& pixelShader) 
+{
+    init(scene, vertexShader, pixelShader);
 }
 
 void D3DObject::disableBlend()
@@ -253,6 +245,8 @@ void D3DObject::disableBlend()
     if (m_blendState != nullptr)
     {
         m_blendState = nullptr;
+        ZeroMemory(m_blendFactor, 4);
+        m_sampleMask = 0xFFFFFFFF;
     }
 }
 
@@ -279,25 +273,17 @@ void D3DObject::updatePSConstant(size_t index, const void* data)
     m_psConstants[index].updateData(data);
 }
 
-void D3DObject::updateBlend(D3DScene& scene)
+
+void D3DObject::enableBlend(Microsoft::WRL::ComPtr<ID3D11BlendState> blendState, const float* blendFactor, uint32_t sampleMask)
 {
-    if (m_blendNeedUpdate)
-    {
-        disableBlend();
-        scene.getDevice()->CreateBlendState(&m_blend.desc, &m_blendState);
-        m_blendNeedUpdate = false;
-    }
+    m_blendState = blendState;
+    memcpy(m_blendFactor, blendFactor, 4);
+    m_sampleMask = sampleMask;
 }
 
-void D3DObject::enableBlend(const D3DBlend& blend)
+void D3DObject::setRasterizerState(Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState)
 {
-    m_blend = blend;
-    m_blendNeedUpdate = true;
-}
-void D3DObject::enableBlend(D3DBlend&& blend)
-{
-    m_blend = blend;
-    m_blendNeedUpdate = true;
+    m_rs = rasterizerState;
 }
 
 const DirectX::XMMATRIX& D3DObject::getTransform() const

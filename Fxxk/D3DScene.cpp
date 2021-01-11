@@ -3,19 +3,8 @@
 
 #pragma comment(lib, "d3d11.lib")
 
-void D3DScene::init(HWND hwnd, float x, float y, float w, float h)
+void D3DScene::init(DXGI_SWAP_CHAIN_DESC& swapChainDescr, float x, float y, float w, float h)
 {
-    DXGI_SWAP_CHAIN_DESC swapChainDescr = { 0 };
-    swapChainDescr.BufferDesc.RefreshRate.Denominator = 1;
-    swapChainDescr.BufferDesc.RefreshRate.Numerator = 0;
-    swapChainDescr.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    swapChainDescr.SampleDesc.Count = 1;
-    swapChainDescr.SampleDesc.Quality = 0;
-    swapChainDescr.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDescr.BufferCount = 1;
-    swapChainDescr.Windowed = true;
-    swapChainDescr.OutputWindow = hwnd;
-
     auto hr = D3D11CreateDeviceAndSwapChain(
         NULL,
         m_driverType,
@@ -70,6 +59,11 @@ void D3DScene::init(HWND hwnd, float x, float y, float w, float h)
 
     assert(SUCCEEDED(hr));
     m_inited = true;
+}
+
+void D3DScene::init(DXGI_SWAP_CHAIN_DESC&& swapChainDescr, float x, float y, float w, float h)
+{
+    init(swapChainDescr, x, y, w, h);
 }
 
 void D3DScene::resize(float x, float y, float w, float h)
@@ -146,6 +140,11 @@ Microsoft::WRL::ComPtr<ID3D11Device> D3DScene::getDevice() const
 Microsoft::WRL::ComPtr<ID3D11DeviceContext> D3DScene::getContext() const
 {
     return this->m_context;
+}
+
+Microsoft::WRL::ComPtr<IDXGISwapChain> D3DScene::getSwapChain() const
+{
+    return this->m_swapChain;
 }
 
 const D3D11_VIEWPORT& D3DScene::getViewport() const

@@ -17,12 +17,6 @@ typedef struct D3DShader
     size_t size;
 } D3DShader;
 
-typedef struct D3DBlend {
-    D3D11_BLEND_DESC desc;
-    float blendFactor[4];
-    uint32_t sampleMask;
-} D3DBlend;
-
 class D3DObject
 {
     friend class D3DScene;
@@ -32,20 +26,19 @@ public:
     template<
         typename T1 = std::vector<D3DAttribute>,
         typename T2 = std::vector<D3DConstant>,
-        typename T3 = D3D11_RASTERIZER_DESC,
-        typename T4 = std::vector<Microsoft::WRL::ComPtr<ID3D11Resource>>,
-        typename T5 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>,
-        typename T6 = std::vector<D3D11_SAMPLER_DESC>
+        typename T3 = std::vector<Microsoft::WRL::ComPtr<ID3D11Resource>>,
+        typename T4 = std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>>,
+        typename T5 = std::vector<Microsoft::WRL::ComPtr<ID3D11SamplerState>>
     >
         D3DObject(
             T1&& attributes,
             T2&& vsConstants,
             T2&& psConstants,
             D3D_PRIMITIVE_TOPOLOGY topopogy,
-            T3&& rasterizerDesc,
-            T4&& textures = {},
-            T5&& textureViews = {},
-            T6&& samplerDesc = {}
+            Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState = nullptr,
+            T3&& textures = {},
+            T4&& textureViews = {},
+            T5&& samplerState = {}
         ) :
         m_indexBuffer(nullptr),
         m_transformBuffer(nullptr),
@@ -55,18 +48,17 @@ public:
         m_layout(nullptr),
         m_vs(nullptr),
         m_ps(nullptr),
-        m_rs(nullptr),
+        m_rs(rasterizerState),
         m_blendState(nullptr),
-        m_blendNeedUpdate(false),
-        m_blend({ {}, { 0 }, 0xffffffff }),
+        m_blendFactor{ 0 },
+        m_sampleMask(0xffffffff),
         m_attributes(std::forward<T1>(attributes)),
         m_vsConstants(std::forward<T2>(vsConstants)),
         m_psConstants(std::forward<T2>(psConstants)),
-        m_rasterizerDesc(std::forward<T3>(rasterizerDesc)),
         m_topology(topopogy),
-        m_textures(std::forward<T4>(textures)),
-        m_textureViews(std::forward<T5>(textureViews)),
-        m_samplerDesc(std::forward<T6>(samplerDesc)),
+        m_textures(std::forward<T3>(textures)),
+        m_textureViews(std::forward<T4>(textureViews)),
+        m_ss(std::forward<T5>(samplerState)),
         m_transform(DirectX::XMMatrixIdentity()),
         m_inited(false)
     {
@@ -79,9 +71,10 @@ public:
     void updateVSConstant(size_t index, const void* data);
     void updatePSConstant(size_t index, const void* data);
     void updateIndex(const void* data);
-    void enableBlend(const D3DBlend& blend);
-    void enableBlend(D3DBlend&& blend);
-    void init(D3DScene& scene, D3DShader vertexShader, D3DShader pixelShader);
+    void setRasterizerState(Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState);
+    void enableBlend(Microsoft::WRL::ComPtr<ID3D11BlendState> blendState, const float* blendFactor, uint32_t sampleMask);
+    void init(D3DScene& scene, D3DShader& vertexShader, D3DShader& pixelShader);
+    void init(D3DScene& scene, D3DShader&& vertexShader, D3DShader&& pixelShader);
     void disableBlend();
     ~D3DObject();
 
@@ -92,13 +85,18 @@ public:
         m_textureViews = std::forward<T2>(textureViews);
     }
 
+    template<typename T = std::vector<Microsoft::WRL::ComPtr<ID3D11Resource>>>
+    void setSamplerState(T&& samplerStates)
+    {
+        m_ss = std::forward<T>(samplerStates);
+    }
+
 private:
     void render(D3DScene& scene);
     void uploadTransform(D3DScene& scene);
     void uploadVertexBuffer(D3DScene& scene);
     void uploadConstantBuffer(D3DScene& scene);
     void uploadIndex(D3DScene& scene);
-    void updateBlend(D3DScene& scene);
 
     Microsoft::WRL::ComPtr<ID3D11Buffer> m_indexBuffer;
     Microsoft::WRL::ComPtr<ID3D11Buffer> m_transformBuffer;
@@ -120,13 +118,11 @@ private:
     std::vector<D3DConstant> m_vsConstants;
     std::vector<D3DConstant> m_psConstants;
     DirectX::XMMATRIX m_transform;
-    D3D11_RASTERIZER_DESC m_rasterizerDesc;
     D3D_PRIMITIVE_TOPOLOGY m_topology;
-    std::vector<D3D11_SAMPLER_DESC> m_samplerDesc;
     std::vector<uint32_t> m_strides;
     std::vector<uint32_t> m_offsets;
     size_t m_indexPosition;
-    D3DBlend m_blend;
-    bool m_blendNeedUpdate;
+    float m_blendFactor[4];
+    uint32_t m_sampleMask;
     bool m_inited;
 };

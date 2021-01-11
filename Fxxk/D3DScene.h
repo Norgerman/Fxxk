@@ -41,9 +41,11 @@ public:
 
     }
     void resize(float x, float y, float w, float h);
-    void init(HWND hwnd, float x, float y, float w, float h);
+    void init(DXGI_SWAP_CHAIN_DESC& swapChainDescr, float x, float y, float w, float h);
+    void init(DXGI_SWAP_CHAIN_DESC&& swapChainDescr, float x, float y, float w, float h);
     Microsoft::WRL::ComPtr<ID3D11Device> getDevice() const;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> getContext() const;
+    Microsoft::WRL::ComPtr<IDXGISwapChain> getSwapChain() const;
     void updateProjection();
     const D3D11_VIEWPORT& getViewport() const;
     void render(std::initializer_list<D3DObject*>&& objs);

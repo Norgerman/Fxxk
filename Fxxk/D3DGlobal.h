@@ -7,7 +7,7 @@ class D3DScene;
 
 namespace D3DGlobal {
     const std::array<float, 4> backgroundColour = { 1.0f, 1.0f, 1.0f, 1.0f };
-    const D3D11_RASTERIZER_DESC defaultRasterizerState = {
+    const D3D11_RASTERIZER_DESC defaultRasterizerStateDesc = {
             D3D11_FILL_MODE::D3D11_FILL_SOLID,
             D3D11_CULL_MODE::D3D11_CULL_BACK,
             TRUE,

@@ -85,11 +85,52 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
+    DXGI_SWAP_CHAIN_DESC swapChainDescr =
+    {
+        { 0, 1, DXGI_FORMAT_B8G8R8A8_UNORM },
+        { 1, 0 },
+        DXGI_USAGE_RENDER_TARGET_OUTPUT,
+        1,
+        hwnd,
+        true
+    };
+
     RECT winRect;
     GetClientRect(hwnd, &winRect);
+    D3D11_SAMPLER_DESC samplerState =
+    {
+        D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+        D3D11_TEXTURE_ADDRESS_WRAP,
+        D3D11_TEXTURE_ADDRESS_WRAP,
+        D3D11_TEXTURE_ADDRESS_WRAP,
+        0.0f,
+        1,
+        D3D11_COMPARISON_ALWAYS,
+        { 0, 0, 0, 0},
+        0,
+        D3D11_FLOAT32_MAX,
+    };
 
     g_scene = new D3DScene();
-    g_scene->init(hwnd, 0.0f, 0.0f, static_cast<float>(winRect.right - winRect.left), static_cast<float>(winRect.bottom - winRect.top));
+    g_scene->init
+    (
+        {
+            { 0, 0, { 0, 1 }, DXGI_FORMAT_B8G8R8A8_UNORM },
+            { 1, 0 },
+            DXGI_USAGE_RENDER_TARGET_OUTPUT,
+            1,
+            hwnd,
+            true
+        },
+        0.0f, 0.0f,
+        static_cast<float>(winRect.right - winRect.left),
+        static_cast<float>(winRect.bottom - winRect.top)
+    );
+    ComPtr<ID3D11RasterizerState> rs = nullptr;
+    ComPtr<ID3D11SamplerState> ss = nullptr;
+
+    g_scene->getDevice()->CreateRasterizerState(&D3DGlobal::defaultRasterizerStateDesc, &rs);
+    g_scene->getDevice()->CreateSamplerState(&samplerState, &ss);
 
     ID3DBlob* vs = nullptr, * ps = nullptr, * error = nullptr;
 #if _DEBUG
@@ -197,22 +238,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
              D3DConstant(color, sizeof(float), 4)
         },
         D3D_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-        D3DGlobal::defaultRasterizerState,
+        rs,
         textures,
         textureViews,
         {
-            {
-                .Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR,
-                .AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
-                .AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
-                .AddressW = D3D11_TEXTURE_ADDRESS_WRAP,
-                .MipLODBias = 0.0f,
-                .MaxAnisotropy = 1,
-                .ComparisonFunc = D3D11_COMPARISON_ALWAYS,
-                .BorderColor = { 0, 0, 0, 0},
-                .MinLOD = 0,
-                .MaxLOD = D3D11_FLOAT32_MAX,
-            }
+            ss
         }
     );
 
@@ -235,22 +265,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
              D3DConstant(color, sizeof(float), 4)
         },
         D3D_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-        D3DGlobal::defaultRasterizerState,
+        rs,
         textures,
         textureViews,
         {
-            {
-                .Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR,
-                .AddressU = D3D11_TEXTURE_ADDRESS_WRAP,
-                .AddressV = D3D11_TEXTURE_ADDRESS_WRAP,
-                .AddressW = D3D11_TEXTURE_ADDRESS_WRAP,
-                .MipLODBias = 0.0f,
-                .MaxAnisotropy = 1,
-                .ComparisonFunc = D3D11_COMPARISON_ALWAYS,
-                .BorderColor = { 0, 0, 0, 0},
-                .MinLOD = 0,
-                .MaxLOD = D3D11_FLOAT32_MAX,
-            }
+            ss
         }
     );
 
@@ -328,6 +347,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             DispatchMessage(&msg);
         }
     }
+
+#if _DEBUG
+    // obj clean check
+    ss = nullptr;
+    rs = nullptr;
+    texture = nullptr;
+    textureView = nullptr;
+    textures.clear();
+    textureViews.clear();
+
+    obj.~D3DObject();
+    obj2.~D3DObject();
+
+    delete g_scene;
+#endif
 
     return (int)msg.wParam;
 }
