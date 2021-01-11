@@ -84,8 +84,9 @@ void D3DObject::render(D3DScene& scene)
         shaderResources.push_back(resource.Get());
     }
 
-    scene.getContext()->PSSetSamplers(0, static_cast<uint32_t>(m_ss.size()), samplers.data());
     scene.getContext()->OMSetBlendState(m_blendState.Get(), m_blendFactor, m_sampleMask);
+    scene.getContext()->OMSetDepthStencilState(m_stencilState.Get(), m_stencilRef);
+    scene.getContext()->PSSetSamplers(0, static_cast<uint32_t>(m_ss.size()), samplers.data());
     scene.getContext()->IASetPrimitiveTopology(m_topology);
     scene.getContext()->IASetInputLayout(m_layout.Get());
     scene.getContext()->PSSetShaderResources(0, static_cast<uint32_t>(m_textureViews.size()), shaderResources.data());
@@ -286,6 +287,12 @@ void D3DObject::setRasterizerState(Microsoft::WRL::ComPtr<ID3D11RasterizerState>
     m_rs = rasterizerState;
 }
 
+void D3DObject::setStencilState(Microsoft::WRL::ComPtr<ID3D11DepthStencilState> stencilState, uint32_t stencilRef)
+{
+    m_stencilState = stencilState;
+    m_stencilRef = stencilRef;
+}
+
 const DirectX::XMMATRIX& D3DObject::getTransform() const
 {
     return m_transform;
@@ -300,6 +307,7 @@ D3DObject::~D3DObject()
     m_ps = nullptr;
     m_rs = nullptr;
     m_blendState = nullptr;
+    m_stencilState = nullptr;
 
     m_vertexBuffer.clear();
     m_psConstantBuffer.clear();

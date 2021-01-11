@@ -38,7 +38,9 @@ public:
             Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState = nullptr,
             T3&& textures = {},
             T4&& textureViews = {},
-            T5&& samplerState = {}
+            T5&& samplerState = {},
+            Microsoft::WRL::ComPtr<ID3D11DepthStencilState> stencilState = nullptr,
+            uint32_t stencilRef = 0
         ) :
         m_indexBuffer(nullptr),
         m_transformBuffer(nullptr),
@@ -49,6 +51,8 @@ public:
         m_vs(nullptr),
         m_ps(nullptr),
         m_rs(rasterizerState),
+        m_stencilState(stencilState),
+        m_stencilRef(0),
         m_blendState(nullptr),
         m_blendFactor{ 0 },
         m_sampleMask(0xffffffff),
@@ -72,6 +76,7 @@ public:
     void updatePSConstant(size_t index, const void* data);
     void updateIndex(const void* data);
     void setRasterizerState(Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState);
+    void setStencilState(Microsoft::WRL::ComPtr<ID3D11DepthStencilState> stencilState, uint32_t stencilRef);
     void enableBlend(Microsoft::WRL::ComPtr<ID3D11BlendState> blendState, const float* blendFactor, uint32_t sampleMask);
     void init(D3DScene& scene, D3DShader& vertexShader, D3DShader& pixelShader);
     void init(D3DScene& scene, D3DShader&& vertexShader, D3DShader&& pixelShader);
@@ -108,6 +113,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D11PixelShader> m_ps;
     Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_rs;
     Microsoft::WRL::ComPtr<ID3D11BlendState> m_blendState;
+    Microsoft::WRL::ComPtr<ID3D11DepthStencilState> m_stencilState;
     std::vector<Microsoft::WRL::ComPtr<ID3D11SamplerState>> m_ss;
     std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> m_vertexBuffer;
     std::vector<Microsoft::WRL::ComPtr<ID3D11Buffer>> m_psConstantBuffer;
@@ -124,5 +130,6 @@ private:
     size_t m_indexPosition;
     float m_blendFactor[4];
     uint32_t m_sampleMask;
+    uint32_t m_stencilRef;
     bool m_inited;
 };
