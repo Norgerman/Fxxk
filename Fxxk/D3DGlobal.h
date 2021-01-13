@@ -19,5 +19,5 @@ namespace D3DGlobal {
             FALSE,
             FALSE
     };
-    DirectX::XMMATRIX project(D3DScene& scene);
+    DirectX::XMMATRIX Project(D3DScene& scene);
 }

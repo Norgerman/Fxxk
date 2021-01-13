@@ -27,7 +27,7 @@ class D3DScene
 public:
 
     D3DScene() noexcept : 
-        D3DScene(D3DGlobal::backgroundColour, D3DGlobal::project, D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0)
+        D3DScene(D3DGlobal::backgroundColour, D3DGlobal::Project, D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0)
     {
 
     }
