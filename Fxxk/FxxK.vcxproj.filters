@@ -27,45 +27,57 @@
     <ClInclude Include="Fxxk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D3DData.h">
+    <ClInclude Include="d3dx12.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D3DConstant.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DAttribute.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DGlobal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DObject.h">
+    <ClInclude Include="StepTimer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D3DScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="D3DObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DAttribute.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DGlobal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DConstant.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DIndex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Fxxk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="D3DScene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D3DObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fxxk.cpp">
+    <ClCompile Include="D3DAttribute.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D3DData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DAttribute.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D3DGlobal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="D3DConstant.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DIndex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

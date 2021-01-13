@@ -1,318 +1,185 @@
-#include "D3DObject.h"
+#include <EffectPipelineStateDescription.h>
+#include <DirectXHelpers.h>
+#include "d3dx12.h"
 #include "D3DScene.h"
+#include "D3DObject.h"
 
-void D3DObject::updateTransform(DirectX::XMMATRIX&& transform)
+
+using namespace DirectX;
+using namespace std;
+
+void D3DObject::Initialize(
+    D3DScene& scene,
+    D3D12_SHADER_BYTECODE& vertexShader,
+    D3D12_SHADER_BYTECODE& pixelShader,
+    const D3D12_BLEND_DESC& blend,
+    const D3D12_DEPTH_STENCIL_DESC& depthStencil,
+    const D3D12_RASTERIZER_DESC& rasterizer,
+    const DirectX::RenderTargetState& renderTarget,
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology,
+    D3D12_INDEX_BUFFER_STRIP_CUT_VALUE stripCutValue)
 {
-    m_transform = std::forward<DirectX::XMMATRIX>(transform);
-    m_transformDesc.updateData(&m_transform);
-}
+    vector<D3D12_INPUT_ELEMENT_DESC> elements;
+    uint32_t idx = 0;
+    for (auto& attribute : m_attributes)
+    {
+        attribute.AppendElement(idx, elements);
+        idx++;
+    }
+    D3D12_INPUT_LAYOUT_DESC layoutDesc = {
+        elements.data(),
+        static_cast<uint32_t>(elements.size())
+    };
 
-void D3DObject::updateTransform(const DirectX::XMMATRIX& transform)
+    EffectPipelineStateDescription pd = {
+        &layoutDesc,
+        blend,
+        depthStencil,
+        rasterizer,
+        renderTarget,
+        primitiveTopology,
+        stripCutValue
+    };
+
+    D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+    vector<CD3DX12_ROOT_PARAMETER> rootParameters(m_constants.size() + m_textureHeap->Count() + m_samplerHeap->Count() + 2);
+    vector<CD3DX12_DESCRIPTOR_RANGE> textureRange(m_textureHeap->Count());
+    vector<CD3DX12_DESCRIPTOR_RANGE> samplerRange(m_samplerHeap->Count());
+    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
+
+    rootParameters[0].InitAsConstantBufferView(0);
+    rootParameters[1].InitAsConstantBufferView(1);
+    idx = 2;
+
+    // constants
+    auto count = m_constants.size();
+    for (size_t i = 0; i < count; i++, idx++)
+    {
+        rootParameters[idx].InitAsConstantBufferView(static_cast<uint32_t>(i + 2));
+    }
+
+    // textures
+    count = m_textureHeap->Count();
+    for (size_t i = 0; i < count; i++, idx++)
+    {
+        textureRange[i] = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, static_cast<uint32_t>(i));
+        rootParameters[idx].InitAsDescriptorTable(1, &textureRange[i], D3D12_SHADER_VISIBILITY_PIXEL);
+    }
+
+    // samplers
+    count = m_samplerHeap->Count();
+    for (size_t i = 0; i < count; i++, idx++)
+    {
+        samplerRange[i] = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, static_cast<uint32_t>(i));
+        rootParameters[idx].InitAsDescriptorTable(1, &samplerRange[i], D3D12_SHADER_VISIBILITY_PIXEL);
+    }
+
+    rootSignatureDesc.Init(static_cast<uint32_t>(rootParameters.size()), rootParameters.data(), 0, nullptr, rootSignatureFlags);
+    auto hr = CreateRootSignature(scene.Device().Get(), &rootSignatureDesc, &m_rootSignature);
+
+    assert(SUCCEEDED(hr));
+
+    pd.CreatePipelineState(scene.Device().Get(), m_rootSignature.Get(), vertexShader, pixelShader, &m_pipelineState);
+}
+void D3DObject::UpdateTransform(const XMMATRIX& transform)
 {
     m_transform = transform;
-    m_transformDesc.updateData(&m_transform);
+    m_transformBuffer.Update(&m_transform);
 }
 
-void D3DObject::uploadTransform(D3DScene& scene)
+void D3DObject::UpdateTransform(XMMATRIX&& transform)
 {
-    m_transformDesc.upload(scene, m_transformBuffer);
+    UpdateTransform(transform);
 }
 
-void D3DObject::uploadVertexBuffer(D3DScene& scene)
+void D3DObject::UpdateIndices(const void* data)
 {
-    size_t i = 0;
-    for (auto& attr : m_attributes)
-    {
-        if (i < m_indexPosition)
-        {
-            attr.upload(scene, m_vertexBuffer[i]);
-        }
-        else if (i > m_indexPosition)
-        {
-            attr.upload(scene, m_vertexBuffer[i - 1]);
-        }
-        i++;
-    }
+    m_indices.Update(data);
 }
 
-void D3DObject::uploadConstantBuffer(D3DScene& scene)
+void D3DObject::UpdateConstant(size_t index, const void* data)
 {
-    size_t i = 0;
-    for (auto& desc : m_vsConstants)
-    {
-        desc.upload(scene, m_vsConstantBuffer[i]);
-    }
-    for (auto& desc : m_psConstants)
-    {
-        desc.upload(scene, m_psConstantBuffer[i]);
-    }
+    m_constants[index].Update(data);
 }
 
-void D3DObject::uploadIndex(D3DScene& scene)
+void D3DObject::UpdateAttribute(size_t index, const void* data)
 {
-    if (m_indexAttribute && m_indexBuffer)
-    {
-        m_indexAttribute->upload(scene, m_indexBuffer);
-    }
+    m_attributes[index].Update(data);
 }
 
-void D3DObject::render(D3DScene& scene)
+void D3DObject::Render(D3DScene& scene)
 {
-    if (!m_inited)
+    m_transformBuffer.Upload(scene);
+    m_indices.Upload(scene);
+
+    for (auto& attribute : m_attributes)
     {
-        return;
+        attribute.Upload(scene);
+    }
+    for (auto& constant : m_constants)
+    {
+        constant.Upload(scene);
     }
 
-    std::vector<ID3D11SamplerState*> samplers;
-    std::vector<ID3D11Buffer*> buffers;
-    std::vector<ID3D11ShaderResourceView*> shaderResources;
+    auto commandList = scene.CommandList();
+    uint32_t idx = 2;
+    ID3D12DescriptorHeap* heaps[] = { m_textureHeap->Heap(), m_samplerHeap->Heap() };
 
-    uploadTransform(scene);
-    uploadIndex(scene);
-    uploadVertexBuffer(scene);
-    uploadConstantBuffer(scene);
+    commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+    commandList->SetPipelineState(m_pipelineState.Get());
+    commandList->SetDescriptorHeaps(2, heaps);
 
-    scene.getContext()->RSSetState(m_rs.Get());
-
-    for (auto& samper : m_ss)
+    // constants
+    commandList->SetGraphicsRootConstantBufferView(0, scene.Projection().GpuAddress());
+    commandList->SetGraphicsRootConstantBufferView(1, m_transformBuffer.GpuAddress());
+    for (auto& constant : m_constants)
     {
-        samplers.push_back(samper.Get());
-    }
-
-    for (auto& resource : m_textureViews)
-    {
-        shaderResources.push_back(resource.Get());
-    }
-
-    scene.getContext()->OMSetBlendState(m_blendState.Get(), m_blendFactor, m_sampleMask);
-    scene.getContext()->OMSetDepthStencilState(m_stencilState.Get(), m_stencilRef);
-    scene.getContext()->PSSetSamplers(0, static_cast<uint32_t>(m_ss.size()), samplers.data());
-    scene.getContext()->IASetPrimitiveTopology(m_topology);
-    scene.getContext()->IASetInputLayout(m_layout.Get());
-    scene.getContext()->PSSetShaderResources(0, static_cast<uint32_t>(m_textureViews.size()), shaderResources.data());
-    scene.getContext()->VSSetConstantBuffers(1, 1, m_transformBuffer.GetAddressOf());
-
-    for (auto& buffer : m_vsConstantBuffer)
-    {
-        buffers.push_back(buffer.Get());
-    }
-
-    scene.getContext()->VSSetConstantBuffers(2, static_cast<uint32_t>(m_vsConstantBuffer.size()), buffers.data());
-
-    buffers.clear();
-
-    for (auto& buffer : m_psConstantBuffer)
-    {
-        buffers.push_back(buffer.Get());
-    }
-
-    scene.getContext()->PSSetConstantBuffers(0, static_cast<uint32_t>(m_psConstantBuffer.size()), buffers.data());
-
-    buffers.clear();
-
-    for (auto& buffer : m_vertexBuffer)
-    {
-        buffers.push_back(buffer.Get());
-    }
-
-    scene.getContext()->IASetVertexBuffers(0, static_cast<uint32_t>(m_vertexBuffer.size()), buffers.data(), m_strides.data(), m_offsets.data());
-
-    scene.getContext()->VSSetShader(m_vs.Get(), NULL, 0);
-    scene.getContext()->PSSetShader(m_ps.Get(), NULL, 0);
-
-    if (m_indexAttribute && m_indexBuffer != nullptr)
-    {
-        scene.getContext()->IASetIndexBuffer(m_indexBuffer.Get(), m_indexAttribute->getFormat(), 0);
-        scene.getContext()->DrawIndexed((m_indexAttribute->getByteSize() - m_indexAttribute->getOffset()) / m_indexAttribute->getElementSize(),
-            m_indexAttribute->getOffset() / m_indexAttribute->getElementSize(), 0);
-    }
-    else if (m_firstVertexAttribute)
-    {
-        scene.getContext()->Draw((m_firstVertexAttribute->getByteSize() - m_firstVertexAttribute->getOffset()) / m_firstVertexAttribute->getStride(), 0);
-    }
-}
-
-void D3DObject::init(D3DScene& scene, D3DShader& vertexShader, D3DShader& pixelShader)
-{
-    auto hr = scene.getDevice()->CreateVertexShader(
-        vertexShader.byteCode,
-        vertexShader.size,
-        NULL,
-        &m_vs);
-    assert(SUCCEEDED(hr));
-
-    hr = scene.getDevice()->CreatePixelShader(
-        pixelShader.byteCode,
-        pixelShader.size,
-        NULL,
-        &m_ps);
-
-    assert(SUCCEEDED(hr));
-
-    // create vertex and index buffer
-    D3D11_SUBRESOURCE_DATA sr = { 0 };
-    D3D11_BUFFER_DESC desc = {};
-    Microsoft::WRL::ComPtr<ID3D11Buffer> buffer = nullptr;
-    size_t idx = 0;
-    uint32_t solt = 0;
-    std::vector<D3D11_INPUT_ELEMENT_DESC> inputDesc;
-
-    for (auto& attr : m_attributes)
-    {
-        desc = attr.buildBufferDesc();
-        sr.pSysMem = attr.getData();
-        hr = scene.getDevice()->CreateBuffer(
-            &desc,
-            &sr,
-            &buffer);
-
-        assert(SUCCEEDED(hr));
-
-        if (!m_indexBuffer && attr.isIndex())
-        {
-            m_indexAttribute = &attr;
-            m_indexBuffer = buffer;
-            m_indexPosition = idx;
-        }
-        else
-        {
-            m_vertexBuffer.push_back(buffer);
-            attr.appendLayout(solt, inputDesc);
-            m_strides.push_back(attr.getStride());
-            m_offsets.push_back(attr.getOffset());
-            solt++;
-
-            if (!m_firstVertexAttribute && attr.getInputSoltClass() == D3D11_INPUT_CLASSIFICATION::D3D11_INPUT_PER_VERTEX_DATA)
-            {
-                m_firstVertexAttribute = &attr;
-            }
-        }
+        commandList->SetGraphicsRootConstantBufferView(idx, constant.GpuAddress());
         idx++;
     }
 
-    hr = scene.getDevice()->CreateInputLayout(
-        inputDesc.data(),
-        static_cast<uint32_t>(inputDesc.size()),
-        vertexShader.byteCode,
-        vertexShader.size,
-        &m_layout);
-
-    assert(SUCCEEDED(hr));
-
-    // create constant buffer
-    desc = m_transformDesc.buildBufferDesc();
-    sr.pSysMem = m_transformDesc.getData();
-    hr = scene.getDevice()->CreateBuffer(
-        &desc,
-        &sr,
-        &buffer);
-    assert(SUCCEEDED(hr));
-    m_transformBuffer = buffer;
-
-    for (auto& constant : m_vsConstants)
+    // textures
+    auto count = m_textureHeap->Count();
+    for (auto i = 0; i < count; i++, idx++)
     {
-        desc = constant.buildBufferDesc();
-        sr.pSysMem = constant.getData();
-        hr = scene.getDevice()->CreateBuffer(
-            &desc,
-            &sr,
-            &buffer);
-        assert(SUCCEEDED(hr));
-        m_vsConstantBuffer.push_back(buffer);
+        commandList->SetGraphicsRootDescriptorTable(idx, m_textureHeap->GetGpuHandle(i));
     }
 
-    for (auto& constant : m_psConstants)
+    // samplers
+    count = m_samplerHeap->Count();
+    for (auto i = 0; i < count; i++, idx++)
     {
-        desc = constant.buildBufferDesc();
-        sr.pSysMem = constant.getData();
-        hr = scene.getDevice()->CreateBuffer(
-            &desc,
-            &sr,
-            &buffer);
-        assert(SUCCEEDED(hr));
-        m_psConstantBuffer.push_back(buffer);
+        commandList->SetGraphicsRootDescriptorTable(idx, m_samplerHeap->GetGpuHandle(i));
     }
 
-    m_inited = true;
-}
+    commandList->IASetIndexBuffer(&m_indices.BufferView());
 
-void D3DObject::init(D3DScene& scene, D3DShader&& vertexShader, D3DShader&& pixelShader) 
-{
-    init(scene, vertexShader, pixelShader);
-}
-
-void D3DObject::disableBlend()
-{
-    if (m_blendState != nullptr)
+    vector<D3D12_VERTEX_BUFFER_VIEW> vertexView;
+    for (auto& attribute : m_attributes)
     {
-        m_blendState = nullptr;
-        ZeroMemory(m_blendFactor, 4);
-        m_sampleMask = 0xFFFFFFFF;
+        vertexView.push_back(attribute.BufferView());
     }
+    commandList->IASetVertexBuffers(0, static_cast<uint32_t>(vertexView.size()), vertexView.data());
+    commandList->IASetPrimitiveTopology(m_primitiveTopology);
+    commandList->DrawIndexedInstanced(m_indices.Size(), 1, 0, 0, 0);
 }
 
-void D3DObject::updateAttribute(size_t index, const void* data)
+void D3DObject::Reset()
 {
-    m_attributes[index].updateData(data);
-}
-
-void D3DObject::updateIndex(const void* data)
-{
-    if (m_indexAttribute)
+    for (auto& attribute : m_attributes)
     {
-        m_indexAttribute->updateData(data);
+        attribute.Reset();
     }
-}
-
-void D3DObject::updateVSConstant(size_t index, const void* data)
-{
-    m_vsConstants[index].updateData(data);
-}
-
-void D3DObject::updatePSConstant(size_t index, const void* data)
-{
-    m_psConstants[index].updateData(data);
-}
-
-
-void D3DObject::enableBlend(Microsoft::WRL::ComPtr<ID3D11BlendState> blendState, const float* blendFactor, uint32_t sampleMask)
-{
-    m_blendState = blendState;
-    memcpy(m_blendFactor, blendFactor, 4);
-    m_sampleMask = sampleMask;
-}
-
-void D3DObject::setRasterizerState(Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState)
-{
-    m_rs = rasterizerState;
-}
-
-void D3DObject::setStencilState(Microsoft::WRL::ComPtr<ID3D11DepthStencilState> stencilState, uint32_t stencilRef)
-{
-    m_stencilState = stencilState;
-    m_stencilRef = stencilRef;
-}
-
-const DirectX::XMMATRIX& D3DObject::getTransform() const
-{
-    return m_transform;
-}
-
-D3DObject::~D3DObject()
-{
-    m_indexBuffer = nullptr;
-    m_transformBuffer = nullptr;
-    m_layout = nullptr;
-    m_vs = nullptr;
-    m_ps = nullptr;
-    m_rs = nullptr;
-    m_blendState = nullptr;
-    m_stencilState = nullptr;
-
-    m_vertexBuffer.clear();
-    m_psConstantBuffer.clear();
-    m_vsConstantBuffer.clear();
-    m_textures.clear();
-    m_textureViews.clear();
-    m_ss.clear();
+    for (auto& constant : m_constants)
+    {
+        constant.Reset();
+    }
+    m_indices.Reset();
+    m_transformBuffer.Reset();
+    m_pipelineState.Reset();
+    m_rootSignature.Reset();
 }

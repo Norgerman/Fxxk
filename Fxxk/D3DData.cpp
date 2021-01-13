@@ -1,3 +1,4 @@
+#include <cstring>
 #include "D3DData.h"
 #include "D3DScene.h"
 
@@ -6,46 +7,68 @@ D3DData::D3DData() :
 {
 
 }
+D3DData::D3DData(const D3DData& other)
+{
+    m_data = other.m_data;
+    m_elementSize = other.m_elementSize;
+    m_size = other.m_size;
+    m_dirty = true;
+}
 
 D3DData::D3DData(const void* data, uint32_t elementSize, uint32_t size) :
     m_data(data),
     m_elementSize(elementSize),
     m_size(size),
-    m_dirty(false)
+    m_dirty(true)
 {
 
 }
-void D3DData::updateData(const void* data)
+void D3DData::Update(const void* data)
 {
     m_data = data;
     m_dirty = true;
 }
-void D3DData::upload(D3DScene& scene, Microsoft::WRL::ComPtr<ID3D11Buffer> buffer)
+void D3DData::Upload(D3DScene& scene)
 {
-    if (buffer != nullptr && shouldUpload())
+    if (ShouldUpload())
     {
-        D3D11_MAPPED_SUBRESOURCE mappedResource;
-        ZeroMemory(&mappedResource, sizeof(D3D11_MAPPED_SUBRESOURCE));
-        auto hr = scene.getContext()->Map(buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-        assert(SUCCEEDED(hr));
-        memcpy(mappedResource.pData, m_data, getByteSize());
-        scene.getContext()->Unmap(buffer.Get(), 0);
-        m_dirty = false;
+        if (m_buffer.Memory() == nullptr)
+        {
+            Alloc(scene);
+        }
+        memcpy(m_buffer.Memory(), m_data, ByteSize());
     }
 }
-uint32_t D3DData::getSize() const
+uint32_t D3DData::Size() const
 {
     return m_size;
 }
-uint32_t D3DData::getElementSize() const
+uint32_t D3DData::ElementSize() const
 {
     return m_elementSize;
 }
-uint32_t D3DData::getByteSize() const
+uint32_t D3DData::ByteSize() const
 {
     return m_size * m_elementSize;
 }
-const void* D3DData::getData() const {
+const void* D3DData::Data() const {
     return m_data;
 }
+
+bool D3DData::ShouldUpload() const
+{
+    return m_dirty;
+}
+
+void D3DData::Reset() 
+{
+    m_buffer.Reset();
+    m_dirty = true;
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS D3DData::GpuAddress() const
+{
+    return m_buffer.GpuAddress();
+}
+
 

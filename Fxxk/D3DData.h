@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
-#include <wrl\client.h>
-#include <d3d11.h>
+#include <memory>
+#include <GraphicsMemory.h>
 
 class D3DScene;
 
@@ -9,19 +9,23 @@ class D3DData
 {
 public:
     D3DData();
+    D3DData(const D3DData& other);
     D3DData(const void* data, uint32_t elementSize, uint32_t size);
-    virtual void updateData(const void* data);
-    virtual void upload(D3DScene& scene, Microsoft::WRL::ComPtr<ID3D11Buffer> buffer);
-    uint32_t getSize() const;
-    uint32_t getElementSize() const;
-    uint32_t getByteSize() const;
-    const void* getData() const;
-    virtual D3D11_BUFFER_DESC buildBufferDesc() = 0;
+    virtual void Update(const void* data);
+    virtual void Upload(D3DScene& scene);
+    uint32_t Size() const;
+    uint32_t ElementSize() const;
+    uint32_t ByteSize() const;
+    const void* Data() const;
+    virtual void Reset();
+    virtual D3D12_GPU_VIRTUAL_ADDRESS GpuAddress() const;
 protected:
-    virtual bool shouldUpload() const = 0;
+    virtual bool ShouldUpload() const;
+    virtual void Alloc(D3DScene& scene) = 0;
 
     uint32_t m_elementSize;
     uint32_t m_size;
+    DirectX::GraphicsResource m_buffer;
     const void* m_data;
     bool m_dirty;
 };

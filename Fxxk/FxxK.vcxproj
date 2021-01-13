@@ -94,6 +94,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>pathcch.lib;d3dcompiler.lib;d3d12.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)
@@ -115,6 +116,7 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>pathcch.lib;d3dcompiler.lib;d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)
@@ -132,6 +134,7 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>pathcch.lib;d3dcompiler.lib;d3d12.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)
@@ -153,6 +156,7 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>pathcch.lib;d3dcompiler.lib;d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>COPY /Y $(ProjectDir)*.hlsl $(TargetDir)
@@ -164,10 +168,13 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
     <ClInclude Include="D3DConstant.h" />
     <ClInclude Include="D3DData.h" />
     <ClInclude Include="D3DGlobal.h" />
+    <ClInclude Include="D3DIndex.h" />
     <ClInclude Include="D3DObject.h" />
-    <ClInclude Include="D3DScene.h" />
+    <ClInclude Include="d3dx12.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="D3DScene.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="StepTimer.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Fxxk.h" />
   </ItemGroup>
@@ -176,9 +183,10 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
     <ClCompile Include="D3DConstant.cpp" />
     <ClCompile Include="D3DData.cpp" />
     <ClCompile Include="D3DGlobal.cpp" />
+    <ClCompile Include="D3DIndex.cpp" />
     <ClCompile Include="D3DObject.cpp" />
-    <ClCompile Include="D3DScene.cpp" />
     <ClCompile Include="Fxxk.cpp" />
+    <ClCompile Include="D3DScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Fxxk.rc" />
@@ -208,12 +216,12 @@ COPY /Y $(ProjectDir)*.png $(TargetDir)</Command>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\directxtk_desktop_win10.2021.1.10.1\build\native\directxtk_desktop_win10.targets" Condition="Exists('..\packages\directxtk_desktop_win10.2021.1.10.1\build\native\directxtk_desktop_win10.targets')" />
+    <Import Project="..\packages\directxtk12_desktop_2017.2021.1.10.1\build\native\directxtk12_desktop_2017.targets" Condition="Exists('..\packages\directxtk12_desktop_2017.2021.1.10.1\build\native\directxtk12_desktop_2017.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\directxtk_desktop_win10.2021.1.10.1\build\native\directxtk_desktop_win10.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtk_desktop_win10.2021.1.10.1\build\native\directxtk_desktop_win10.targets'))" />
+    <Error Condition="!Exists('..\packages\directxtk12_desktop_2017.2021.1.10.1\build\native\directxtk12_desktop_2017.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtk12_desktop_2017.2021.1.10.1\build\native\directxtk12_desktop_2017.targets'))" />
   </Target>
 </Project>
