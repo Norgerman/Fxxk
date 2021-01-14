@@ -538,11 +538,11 @@ void D3DScene::OnDeviceLost()
     m_dxgiFactory.Reset();
     m_memory.reset();
     m_projectionConstant.Reset();
-
     for (auto& obj : m_objects)
     {
         obj->Reset();
     }
+    m_objects.clear();
 
     CreateDevice();
     CreateResources();
