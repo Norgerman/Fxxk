@@ -218,31 +218,28 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     };
 
     RenderTargetState renderTargetState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
+    vector<shared_ptr<D3DAttribute>> attributes = {
+        make_shared<D3DAttribute>(&vertices, static_cast<uint32_t>(sizeof(VertexPositionNormalTexture)), 4, static_cast <uint32_t>(sizeof(VertexPositionNormalTexture)), verticesDesc),
+        make_shared<D3DAttribute>(&textureMatrixX, static_cast<uint32_t>(sizeof(float)), 9, static_cast <uint32_t>(sizeof(float) * 9), textureMatrixDesc)
+    };
+    auto index = make_shared<D3DIndex>(&indices, 4, 6);
+    vector<shared_ptr<D3DConstant>> constants = {
+         make_shared<D3DConstant>(&textureMatrixY, 4, 16),
+         make_shared<D3DConstant>(&color, 4, 4)
+    };
 
     D3DObject obj1(
-        initializer_list {
-            D3DAttribute(&vertices, sizeof(VertexPositionNormalTexture), 4, sizeof(VertexPositionNormalTexture), verticesDesc),
-            D3DAttribute(&textureMatrixX, sizeof(float), 9, sizeof(float) * 9, textureMatrixDesc)
-        },
-        D3DIndex(&indices, 4, 6),
-        initializer_list{
-            D3DConstant(&textureMatrixY, 4, 16),
-            D3DConstant(&color, 4, 4)
-        },
+        attributes,
+        index,
+        constants,
         textureHeap,
         samplerHeap
     );
 
     D3DObject obj2(
-        initializer_list {
-            D3DAttribute(&vertices, sizeof(VertexPositionNormalTexture), 4, sizeof(VertexPositionNormalTexture), verticesDesc),
-            D3DAttribute(&textureMatrixX, sizeof(float), 9, sizeof(float) * 9, textureMatrixDesc)
-        },
-        D3DIndex(&indices, 4, 6),
-        initializer_list {
-            D3DConstant(&textureMatrixY, 4, 16),
-            D3DConstant(&color, 4, 4)
-        },
+        attributes,
+        index,
+        constants,
         textureHeap2,
         samplerHeap
     );
@@ -253,7 +250,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ps->Release();
     vs->Release();
 
-    g_scene->SetRenderList(std::initializer_list<D3DObject*>{ &obj1, &obj2 });
+    g_scene->SetRenderList(std::initializer_list<D3DObject*>{ &obj1, & obj2 });
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT1));
 
@@ -300,12 +297,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                 color[3] = Randf();
             }
 
-            obj1.UpdateAttribute(1, textureMatrixX);
-            obj1.UpdateConstant(0, textureMatrixY);
-            obj1.UpdateConstant(1, color);
-            obj2.UpdateAttribute(1, textureMatrixX);
-            obj2.UpdateConstant(0, textureMatrixY);
-            obj2.UpdateConstant(1, color);
+            attributes[1]->Update(textureMatrixX);
+            constants[0]->Update(textureMatrixY);
+            constants[1]->Update(color);
 
             obj1.UpdateTransform(Transform(g_scene->Viewport(), angle, scale, w, h));
             obj2.UpdateTransform(Transform(g_scene->Viewport(), angle * 2, scale, w, h));

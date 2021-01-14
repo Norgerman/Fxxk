@@ -52,12 +52,12 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
-    std::vector<D3DAttribute> m_attributes;
-    std::vector<D3DConstant> m_constants;
+    std::vector<std::shared_ptr<D3DAttribute>> m_attributes;
+    std::vector<std::shared_ptr<D3DConstant>> m_constants;
     std::shared_ptr<DirectX::DescriptorHeap> m_textureHeap;
     std::shared_ptr<DirectX::DescriptorHeap> m_samplerHeap;
     D3DConstant m_transformBuffer;
-    D3DIndex m_indices;
+    std::shared_ptr<D3DIndex> m_indices;
     DirectX::XMMATRIX m_transform;
     D3D12_PRIMITIVE_TOPOLOGY m_primitiveTopology;
 };

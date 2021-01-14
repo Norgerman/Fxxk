@@ -23,7 +23,7 @@ void D3DObject::Initialize(
     uint32_t idx = 0;
     for (auto& attribute : m_attributes)
     {
-        attribute.AppendElement(idx, elements);
+        attribute->AppendElement(idx, elements);
         idx++;
     }
     D3D12_INPUT_LAYOUT_DESC layoutDesc = {
@@ -98,31 +98,31 @@ void D3DObject::UpdateTransform(XMMATRIX&& transform)
 
 void D3DObject::UpdateIndices(const void* data)
 {
-    m_indices.Update(data);
+    m_indices->Update(data);
 }
 
 void D3DObject::UpdateConstant(size_t index, const void* data)
 {
-    m_constants[index].Update(data);
+    m_constants[index]->Update(data);
 }
 
 void D3DObject::UpdateAttribute(size_t index, const void* data)
 {
-    m_attributes[index].Update(data);
+    m_attributes[index]->Update(data);
 }
 
 void D3DObject::Render(D3DScene& scene)
 {
     m_transformBuffer.Upload(scene);
-    m_indices.Upload(scene);
+    m_indices->Upload(scene);
 
     for (auto& attribute : m_attributes)
     {
-        attribute.Upload(scene);
+        attribute->Upload(scene);
     }
     for (auto& constant : m_constants)
     {
-        constant.Upload(scene);
+        constant->Upload(scene);
     }
 
     auto commandList = scene.CommandList();
@@ -138,7 +138,7 @@ void D3DObject::Render(D3DScene& scene)
     commandList->SetGraphicsRootConstantBufferView(1, m_transformBuffer.GpuAddress());
     for (auto& constant : m_constants)
     {
-        commandList->SetGraphicsRootConstantBufferView(idx, constant.GpuAddress());
+        commandList->SetGraphicsRootConstantBufferView(idx, constant->GpuAddress());
         idx++;
     }
 
@@ -156,29 +156,29 @@ void D3DObject::Render(D3DScene& scene)
         commandList->SetGraphicsRootDescriptorTable(idx, m_samplerHeap->GetGpuHandle(i));
     }
 
-    commandList->IASetIndexBuffer(&m_indices.BufferView());
+    commandList->IASetIndexBuffer(&m_indices->BufferView());
 
     vector<D3D12_VERTEX_BUFFER_VIEW> vertexView;
     for (auto& attribute : m_attributes)
     {
-        vertexView.push_back(attribute.BufferView());
+        vertexView.push_back(attribute->BufferView());
     }
     commandList->IASetVertexBuffers(0, static_cast<uint32_t>(vertexView.size()), vertexView.data());
     commandList->IASetPrimitiveTopology(m_primitiveTopology);
-    commandList->DrawIndexedInstanced(m_indices.Size(), 1, 0, 0, 0);
+    commandList->DrawIndexedInstanced(m_indices->Size(), 1, 0, 0, 0);
 }
 
 void D3DObject::Reset()
 {
     for (auto& attribute : m_attributes)
     {
-        attribute.Reset();
+        attribute->Reset();
     }
     for (auto& constant : m_constants)
     {
-        constant.Reset();
+        constant->Reset();
     }
-    m_indices.Reset();
+    m_indices->Reset();
     m_transformBuffer.Reset();
     m_pipelineState.Reset();
     m_rootSignature.Reset();
