@@ -1,5 +1,6 @@
 #include <EffectPipelineStateDescription.h>
 #include <DirectXHelpers.h>
+#include <wil/result.h>
 #include "d3dx12.h"
 #include "D3DScene.h"
 #include "D3DObject.h"
@@ -81,7 +82,7 @@ void D3DObject::Initialize(
     rootSignatureDesc.Init(static_cast<uint32_t>(rootParameters.size()), rootParameters.data(), 0, nullptr, rootSignatureFlags);
     auto hr = CreateRootSignature(scene.Device().Get(), &rootSignatureDesc, &m_rootSignature);
 
-    assert(SUCCEEDED(hr));
+    THROW_IF_FAILED(hr);
 
     pd.CreatePipelineState(scene.Device().Get(), m_rootSignature.Get(), vertexShader, pixelShader, &m_pipelineState);
 }

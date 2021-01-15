@@ -1,10 +1,7 @@
-//
-// Game.cpp
-//
-
+#include <algorithm>
 #include <DirectXMath.h>
 #include <DirectXColors.h>
-#include <algorithm>
+#include <wil/result.h>
 #include "d3dx12.h"
 #include "D3DScene.h"
 #include "D3DObject.h"
@@ -94,8 +91,8 @@ void D3DScene::Render()
 void D3DScene::Clear()
 {
     // Reset command list and allocator.
-    DX::ThrowIfFailed(m_commandAllocators[m_backBufferIndex]->Reset());
-    DX::ThrowIfFailed(m_commandList->Reset(m_commandAllocators[m_backBufferIndex].Get(), nullptr));
+    THROW_IF_FAILED(m_commandAllocators[m_backBufferIndex]->Reset());
+    THROW_IF_FAILED(m_commandList->Reset(m_commandAllocators[m_backBufferIndex].Get(), nullptr));
 
     // Transition the render target into the correct state to allow for drawing into it.
     D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -124,7 +121,7 @@ void D3DScene::Present()
     m_commandList->ResourceBarrier(1, &barrier);
 
     // Send the command list off to the GPU for processing.
-    DX::ThrowIfFailed(m_commandList->Close());
+    THROW_IF_FAILED(m_commandList->Close());
     m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_commandList.GetAddressOf()));
 
     // The first argument instructs DXGI to block until VSync, putting the application
@@ -139,7 +136,7 @@ void D3DScene::Present()
     }
     else
     {
-        DX::ThrowIfFailed(hr);
+        THROW_IF_FAILED(hr);
 
         MoveToNextFrame();
     }
@@ -205,13 +202,13 @@ void D3DScene::CreateDevice()
     }
 #endif
 
-    DX::ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())));
+    THROW_IF_FAILED(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())));
 
     ComPtr<IDXGIAdapter1> adapter;
     GetAdapter(adapter.GetAddressOf());
 
     // Create the DX12 API device object.
-    DX::ThrowIfFailed(D3D12CreateDevice(
+    THROW_IF_FAILED(D3D12CreateDevice(
         adapter.Get(),
         m_featureLevel,
         IID_PPV_ARGS(m_d3dDevice.ReleaseAndGetAddressOf())
@@ -242,7 +239,7 @@ void D3DScene::CreateDevice()
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-    DX::ThrowIfFailed(m_d3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(m_commandQueue.ReleaseAndGetAddressOf())));
+    THROW_IF_FAILED(m_d3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(m_commandQueue.ReleaseAndGetAddressOf())));
 
     // Create descriptor heaps for render target views and depth stencil views.
     D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc = {};
@@ -253,23 +250,23 @@ void D3DScene::CreateDevice()
     dsvDescriptorHeapDesc.NumDescriptors = 1;
     dsvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 
-    DX::ThrowIfFailed(m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(m_rtvDescriptorHeap.ReleaseAndGetAddressOf())));
-    DX::ThrowIfFailed(m_d3dDevice->CreateDescriptorHeap(&dsvDescriptorHeapDesc, IID_PPV_ARGS(m_dsvDescriptorHeap.ReleaseAndGetAddressOf())));
+    THROW_IF_FAILED(m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(m_rtvDescriptorHeap.ReleaseAndGetAddressOf())));
+    THROW_IF_FAILED(m_d3dDevice->CreateDescriptorHeap(&dsvDescriptorHeapDesc, IID_PPV_ARGS(m_dsvDescriptorHeap.ReleaseAndGetAddressOf())));
 
     m_rtvDescriptorSize = m_d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     // Create a command allocator for each back buffer that will be rendered to.
     for (UINT n = 0; n < c_swapBufferCount; n++)
     {
-        DX::ThrowIfFailed(m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_commandAllocators[n].ReleaseAndGetAddressOf())));
+        THROW_IF_FAILED(m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_commandAllocators[n].ReleaseAndGetAddressOf())));
     }
 
     // Create a command list for recording graphics commands.
-    DX::ThrowIfFailed(m_d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(m_commandList.ReleaseAndGetAddressOf())));
-    DX::ThrowIfFailed(m_commandList->Close());
+    THROW_IF_FAILED(m_d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(m_commandList.ReleaseAndGetAddressOf())));
+    THROW_IF_FAILED(m_commandList->Close());
 
     // Create a fence for tracking GPU execution progress.
-    DX::ThrowIfFailed(m_d3dDevice->CreateFence(m_fenceValues[m_backBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));
+    THROW_IF_FAILED(m_d3dDevice->CreateFence(m_fenceValues[m_backBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));
     m_fenceValues[m_backBufferIndex]++;
 
     m_fenceEvent.Attach(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
@@ -316,7 +313,7 @@ void D3DScene::CreateResources()
         }
         else
         {
-            DX::ThrowIfFailed(hr);
+            THROW_IF_FAILED(hr);
         }
     }
     else
@@ -339,7 +336,7 @@ void D3DScene::CreateResources()
 
         // Create a swap chain for the window.
         ComPtr<IDXGISwapChain1> swapChain;
-        DX::ThrowIfFailed(m_dxgiFactory->CreateSwapChainForHwnd(
+        THROW_IF_FAILED(m_dxgiFactory->CreateSwapChainForHwnd(
             m_commandQueue.Get(),
             m_window,
             &swapChainDesc,
@@ -348,17 +345,17 @@ void D3DScene::CreateResources()
             swapChain.GetAddressOf()
         ));
 
-        DX::ThrowIfFailed(swapChain.As(&m_swapChain));
+        THROW_IF_FAILED(swapChain.As(&m_swapChain));
 
         // This template does not support exclusive fullscreen mode and prevents DXGI from responding to the ALT+ENTER shortcut
-        DX::ThrowIfFailed(m_dxgiFactory->MakeWindowAssociation(m_window, DXGI_MWA_NO_ALT_ENTER));
+        THROW_IF_FAILED(m_dxgiFactory->MakeWindowAssociation(m_window, DXGI_MWA_NO_ALT_ENTER));
     }
 
     // Obtain the back buffers for this window which will be the final render targets
     // and create render target views for each of them.
     for (UINT n = 0; n < c_swapBufferCount; n++)
     {
-        DX::ThrowIfFailed(m_swapChain->GetBuffer(n, IID_PPV_ARGS(m_renderTargets[n].GetAddressOf())));
+        THROW_IF_FAILED(m_swapChain->GetBuffer(n, IID_PPV_ARGS(m_renderTargets[n].GetAddressOf())));
 
         wchar_t name[25] = {};
         m_renderTargets[n]->SetName(name);
@@ -390,7 +387,7 @@ void D3DScene::CreateResources()
     depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
     depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
-    DX::ThrowIfFailed(m_d3dDevice->CreateCommittedResource(
+    THROW_IF_FAILED(m_d3dDevice->CreateCommittedResource(
         &depthHeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &depthStencilDesc,
@@ -436,7 +433,7 @@ void D3DScene::MoveToNextFrame()
 {
     // Schedule a Signal command in the queue.
     const UINT64 currentFenceValue = m_fenceValues[m_backBufferIndex];
-    DX::ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), currentFenceValue));
+    THROW_IF_FAILED(m_commandQueue->Signal(m_fence.Get(), currentFenceValue));
 
     // Update the back buffer index.
     m_backBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -444,7 +441,7 @@ void D3DScene::MoveToNextFrame()
     // If the next frame is not ready to be rendered yet, wait until it is ready.
     if (m_fence->GetCompletedValue() < m_fenceValues[m_backBufferIndex])
     {
-        DX::ThrowIfFailed(m_fence->SetEventOnCompletion(m_fenceValues[m_backBufferIndex], m_fenceEvent.Get()));
+        THROW_IF_FAILED(m_fence->SetEventOnCompletion(m_fenceValues[m_backBufferIndex], m_fenceEvent.Get()));
         WaitForSingleObjectEx(m_fenceEvent.Get(), INFINITE, FALSE);
     }
 
@@ -462,7 +459,7 @@ void D3DScene::GetAdapter(IDXGIAdapter1** ppAdapter)
     for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != m_dxgiFactory->EnumAdapters1(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
     {
         DXGI_ADAPTER_DESC1 desc;
-        DX::ThrowIfFailed(adapter->GetDesc1(&desc));
+        THROW_IF_FAILED(adapter->GetDesc1(&desc));
 
         if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
         {

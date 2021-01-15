@@ -119,7 +119,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         0,
         &vs,
         &error);
-    assert(SUCCEEDED(hr));
+    THROW_IF_FAILED(hr);
 
     hr = D3DCompileFromFile(
         (s + L"\\PixelShader.hlsl").data(),
@@ -131,7 +131,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         0,
         &ps,
         &error);
-    assert(SUCCEEDED(hr));
+    THROW_IF_FAILED(hr);
 
     if (error) {
         error->Release();
@@ -155,7 +155,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     for (auto& element : textureFiles)
     {
         hr = DirectX::CreateWICTextureFromFile(g_scene->Device().Get(), resourceUpload, element.data(), &texture, false);
-        assert(SUCCEEDED(hr));
+        THROW_IF_FAILED(hr);
         textures.push_back(texture);
         CreateShaderResourceView(g_scene->Device().Get(), texture.Get(), textureHeap->GetCpuHandle(idx));
         CreateShaderResourceView(g_scene->Device().Get(), texture.Get(), textureHeap2->GetCpuHandle((idx + 1) % 2));
@@ -360,7 +360,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND& hwnd)
     }
 
     ShowWindow(hWnd, nCmdShow);
-    //UpdateWindow(hWnd);
+    UpdateWindow(hWnd);
 
     hwnd = hWnd;
 

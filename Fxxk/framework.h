@@ -20,6 +20,7 @@
 #include <DescriptorHeap.h>
 #include <DirectXHelpers.h>
 #include <CommonStates.h>
+#include <wil/result.h>
 
 // C RunTime Header Files
 #include <cstdlib>

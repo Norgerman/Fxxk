@@ -3929,18 +3929,6 @@ private:
     D3D12_NODE_MASK m_Desc;
 };
 
-namespace DX
-{
-    inline void ThrowIfFailed(HRESULT hr)
-    {
-        if (FAILED(hr))
-        {
-            // Set a breakpoint on this line to catch DirectX API errors
-            throw std::exception();
-        }
-    }
-}
-
 #endif // #ifndef D3DX12_NO_STATE_OBJECT_HELPERS
 #endif // NTDDI_WIN10_RS5
 
