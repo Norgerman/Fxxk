@@ -6,9 +6,9 @@
 #include <D3DObject.h>
 #include "d3dx12.h"
 
-//#ifdef _DEBUG
-//#include <dxgidebug.h>
-//#endif
+#ifdef _DEBUG
+#include <dxgidebug.h>
+#endif
 
 namespace DX {
     using namespace DirectX;
@@ -180,27 +180,27 @@ namespace DX {
     {
         DWORD dxgiFactoryFlags = 0;
 
-        //#if defined(_DEBUG)
-        //    // Enable the debug layer (requires the Graphics Tools "optional feature").
-        //    //
-        //    // NOTE: Enabling the debug layer after device creation will invalidate the active device.
-        //    {
-        //        ComPtr<ID3D12Debug> debugController;
-        //        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
-        //        {
-        //            debugController->EnableDebugLayer();
-        //        }
+#if defined(_DEBUG)
+        // Enable the debug layer (requires the Graphics Tools "optional feature").
         //
-        //        ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
-        //        if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
-        //        {
-        //            dxgiFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-        //
-        //            dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
-        //            dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
-        //        }
-        //    }
-        //#endif
+        // NOTE: Enabling the debug layer after device creation will invalidate the active device.
+        {
+            ComPtr<ID3D12Debug> debugController;
+            if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
+            {
+                debugController->EnableDebugLayer();
+            }
+
+            ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+            if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
+            {
+                dxgiFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+
+                dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
+                dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+            }
+        }
+#endif
 
         THROW_IF_FAILED(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())));
 
@@ -214,27 +214,27 @@ namespace DX {
             IID_PPV_ARGS(m_d3dDevice.ReleaseAndGetAddressOf())
         ));
 
-        //#ifndef NDEBUG
-        //    // Configure debug device (if active).
-        //    ComPtr<ID3D12InfoQueue> d3dInfoQueue;
-        //    if (SUCCEEDED(m_d3dDevice.As(&d3dInfoQueue)))
-        //    {
-        //#ifdef _DEBUG
-        //        d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-        //        d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-        //#endif
-        //        D3D12_MESSAGE_ID hide[] =
-        //        {
-        //            D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-        //            D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
-        //        };
-        //        D3D12_INFO_QUEUE_FILTER filter = {};
-        //        filter.DenyList.NumIDs = _countof(hide);
-        //        filter.DenyList.pIDList = hide;
-        //        d3dInfoQueue->AddStorageFilterEntries(&filter);
-        //    }
-        //#endif
-            // Create the command queue.
+#ifndef NDEBUG
+        // Configure debug device (if active).
+        ComPtr<ID3D12InfoQueue> d3dInfoQueue;
+        if (SUCCEEDED(m_d3dDevice.As(&d3dInfoQueue)))
+        {
+#ifdef _DEBUG
+            d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+            d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+#endif
+            D3D12_MESSAGE_ID hide[] =
+            {
+                D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+            };
+            D3D12_INFO_QUEUE_FILTER filter = {};
+            filter.DenyList.NumIDs = _countof(hide);
+            filter.DenyList.pIDList = hide;
+            d3dInfoQueue->AddStorageFilterEntries(&filter);
+        }
+#endif
+        // Create the command queue.
         D3D12_COMMAND_QUEUE_DESC queueDesc = {};
         queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
