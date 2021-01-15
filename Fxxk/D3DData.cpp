@@ -37,6 +37,7 @@ void D3DData::Upload(D3DScene& scene)
             Alloc(scene);
         }
         memcpy(m_buffer.Memory(), m_data, ByteSize());
+        m_dirty = false;
     }
 }
 uint32_t D3DData::Size() const
