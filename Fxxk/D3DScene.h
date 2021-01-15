@@ -44,6 +44,7 @@ public:
         m_fenceValues{},
         m_projection(DirectX::XMMatrixIdentity()),
         m_projectionConstant(nullptr, 4, 16),
+        m_suspended(false),
         m_objects()
     {
 
@@ -127,4 +128,5 @@ private:
 
     DX::StepTimer m_timer;
     std::vector<D3DObject*> m_objects;
+    bool m_suspended;
 };

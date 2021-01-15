@@ -43,10 +43,13 @@ void D3DScene::Initialize(HWND window, float x, float y, float width, float heig
     */
 }
 
-// Executes the basic game loop.
-
 void D3DScene::Tick()
 {
+    if (m_suspended)
+    {
+        return;
+    }
+
     m_timer.Tick([&]()
         {
             Update(m_timer);
@@ -145,24 +148,24 @@ void D3DScene::Present()
 // Message handlers
 void D3DScene::OnActivated()
 {
-    // TODO: Game is becoming active window.
+    // nothing
 }
 
 void D3DScene::OnDeactivated()
 {
-    // TODO: Game is becoming background window.
+    // nothing
 }
 
 void D3DScene::OnSuspending()
 {
-    // TODO: Game is being power-suspended (or minimized).
+    m_suspended = true;
 }
 
 void D3DScene::OnResuming()
 {
     m_timer.ResetElapsedTime();
 
-    // TODO: Game is being power-resumed (or returning from minimize).
+    m_suspended = false;
 }
 
 void D3DScene::OnWindowSizeChanged(float x, float y, float width, float height)
@@ -519,8 +522,6 @@ const D3DConstant& D3DScene::Projection() const
 
 void D3DScene::OnDeviceLost()
 {
-    // TODO: Perform Direct3D resource cleanup.
-
     for (UINT n = 0; n < c_swapBufferCount; n++)
     {
         m_commandAllocators[n].Reset();

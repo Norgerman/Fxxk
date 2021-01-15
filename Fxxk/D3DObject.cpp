@@ -15,7 +15,7 @@ void D3DObject::Initialize(
     const D3D12_BLEND_DESC& blend,
     const D3D12_DEPTH_STENCIL_DESC& depthStencil,
     const D3D12_RASTERIZER_DESC& rasterizer,
-    const DirectX::RenderTargetState& renderTarget,
+    const RenderTargetState& renderTarget,
     D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology,
     D3D12_INDEX_BUFFER_STRIP_CUT_VALUE stripCutValue)
 {

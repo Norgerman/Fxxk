@@ -49,7 +49,6 @@ public:
     void Reset();
     void Render(D3DScene& scene);
 private:
-
     Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
     Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
     std::vector<std::shared_ptr<D3DAttribute>> m_attributes;
