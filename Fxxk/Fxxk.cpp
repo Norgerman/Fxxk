@@ -256,7 +256,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MSG msg = {};
     uint32_t count = 0;
     float scale = 1;
-    float step = 0.00f;
+    float step = 0.01f;
     float angle = 0;
     float angleStep = 1;
 
