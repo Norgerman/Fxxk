@@ -3,17 +3,18 @@
 
 #include "framework.h"
 #include "Fxxk.h"
-#include "D3DScene.h"
-#include "D3DObject.h"
-#include "D3DConstant.h"
-#include "D3DAttribute.h"
-#include "D3DIndex.h"
+#include <D3DScene.h>
+#include <D3DObject.h>
+#include <D3DConstant.h>
+#include <D3DAttribute.h>
+#include <D3DIndex.h>
 
 #define M_PI acosf(-1.0)
 
 using namespace std;
 using namespace Microsoft::WRL;
 using namespace DirectX;
+using namespace DX;
 
 // Global Variables:
 constexpr auto MAX_LOADSTRING = 100;
@@ -243,8 +244,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         samplerHeap
     );
 
-    obj1.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, D3DGlobal::defaultRasterizerStateDesc, renderTargetState);
-    obj2.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, D3DGlobal::defaultRasterizerStateDesc, renderTargetState);
+    obj1.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, Global::defaultRasterizerStateDesc, renderTargetState);
+    obj2.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, Global::defaultRasterizerStateDesc, renderTargetState);
 
     ps->Release();
     vs->Release();
