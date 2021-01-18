@@ -28,6 +28,7 @@
     <ClInclude Include="include\D3DScene.h" />
     <ClInclude Include="include\export.h" />
     <ClInclude Include="src\d3dx12.h" />
+    <ClInclude Include="src\StepTimer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\D3DAttribute.cpp" />
