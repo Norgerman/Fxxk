@@ -9,7 +9,6 @@
 // Windows Header Files
 #include <windows.h>
 #include <pathcch.h>
-#include <d3dcompiler.h>
 #include <wrl/client.h>
 #include <d3d12.h>
 #include <DirectXMath.h>

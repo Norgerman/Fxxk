@@ -8,6 +8,7 @@
 #include <D3DConstant.h>
 #include <D3DAttribute.h>
 #include <D3DIndex.h>
+#include <fstream>
 
 #define M_PI acosf(-1.0)
 
@@ -103,44 +104,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         D3D12_FLOAT32_MAX,
     };
 
-    ID3DBlob* vs = nullptr, * ps = nullptr, * error = nullptr;
-#if _DEBUG
-    auto compileFlags = D3DCOMPILE_ENABLE_STRICTNESS | D3DCOMPILE_DEBUG;
-#else
-    auto compileFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-#endif
+    ifstream vsStream(s + L"\\VertexShader.cso", ios::binary);
+    ifstream psStream(s + L"\\PixelShader.cso", ios::binary);
+    vector<char> vs = vector<char>(istreambuf_iterator<char>(vsStream), istreambuf_iterator<char>());
+    vector<char> ps = vector<char>(istreambuf_iterator<char>(psStream), istreambuf_iterator<char>());
 
-    auto hr = D3DCompileFromFile(
-        (s + L"\\VertexShader.hlsl").data(),
-        nullptr,
-        D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "main",
-        "vs_5_0",
-        compileFlags,
-        0,
-        &vs,
-        &error);
-    THROW_IF_FAILED(hr);
-
-    hr = D3DCompileFromFile(
-        (s + L"\\PixelShader.hlsl").data(),
-        nullptr,
-        D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "main",
-        "ps_5_0",
-        compileFlags,
-        0,
-        &ps,
-        &error);
-    THROW_IF_FAILED(hr);
-
-    if (error) {
-        error->Release();
-    }
+    vsStream.close();
+    psStream.close();
 
     float w = 1600;
     float h = 450;
 
+    HRESULT hr = S_OK;
     std::vector<ComPtr<ID3D12Resource>> textures;
     ComPtr<ID3D12Resource> texture = nullptr;
     std::vector<wstring> textureFiles = { s + L"\\a.png", s + L"\\b.png" };
@@ -180,13 +155,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     };
 
     D3D12_SHADER_BYTECODE vertexShader = {
-        vs->GetBufferPointer(),
-        vs->GetBufferSize()
+        vs.data(),
+        vs.size()
     };
 
     D3D12_SHADER_BYTECODE pixelShader = {
-      ps->GetBufferPointer(),
-      ps->GetBufferSize()
+      ps.data(),
+      ps.size()
     };
 
     uint32_t indices[] = {
@@ -259,9 +234,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     obj1.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, Global::defaultRasterizerStateDesc, renderTargetState);
     obj2.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, Global::defaultRasterizerStateDesc, renderTargetState);
-
-    ps->Release();
-    vs->Release();
 
     g_scene->SetRenderList(std::initializer_list<D3DObject*>{ &obj1, & obj2 });
 
