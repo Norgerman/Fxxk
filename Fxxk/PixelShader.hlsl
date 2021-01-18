@@ -17,5 +17,5 @@ float4 main(PS_IN input) : SV_TARGET
 {
 	float4 c1 = shaderTexture1.Sample(samper1, input.tex);
 
-	return float4((mul(c1, 1 - color.a) +  mul(color, color.a)).xyz, c1.a);
+	return float4((mul(c1, 1 - color.a) + mul(color, color.a)).xyz, c1.a);
 }

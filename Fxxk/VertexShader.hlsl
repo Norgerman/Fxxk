@@ -23,7 +23,7 @@ struct VS_OUT {
     float2 tex: TEXCOORD;
 };
 
-VS_OUT main(VS_IN input){
+VS_OUT main(VS_IN input) {
     VS_OUT output;
     float4 f = mul(transform, float4(input.position, 1.0f));
     output.world_position = f.xyz;
