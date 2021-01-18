@@ -18,8 +18,8 @@ namespace DX {
             vector<D3DAttribute*>&& attributes,
             D3DIndex* indices,
             vector<D3DConstant*>&& constants,
-            DirectX::DescriptorHeap* textureHeap,
-            DirectX::DescriptorHeap* samplerHeap,
+            D3DDescriptorHeap* textureHeap,
+            D3DDescriptorHeap* samplerHeap,
             D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
             m_attributes(move(attributes)),
             m_indices(indices),
@@ -37,8 +37,8 @@ namespace DX {
             const vector<D3DAttribute*>& attributes,
             D3DIndex* indices,
             const vector<D3DConstant*>& constants,
-            DirectX::DescriptorHeap* textureHeap,
-            DirectX::DescriptorHeap* samplerHeap,
+            D3DDescriptorHeap* textureHeap,
+            D3DDescriptorHeap* samplerHeap,
             D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
             m_attributes(attributes),
             m_indices(indices),
@@ -229,8 +229,8 @@ namespace DX {
         ComPtr<ID3D12RootSignature> m_rootSignature;
         vector<D3DAttribute*> m_attributes;
         vector<D3DConstant*> m_constants;
-        DescriptorHeap* m_textureHeap;
-        DescriptorHeap* m_samplerHeap;
+        D3DDescriptorHeap* m_textureHeap;
+        D3DDescriptorHeap* m_samplerHeap;
         D3DConstant m_transformBuffer;
         D3DIndex* m_indices;
         XMMATRIX m_transform;
@@ -241,8 +241,8 @@ namespace DX {
         vector<D3DAttribute*>&& attributes,
         D3DIndex* indices,
         std::vector<D3DConstant*>&& constants,
-        DirectX::DescriptorHeap* textureHeap,
-        DirectX::DescriptorHeap* samplerHeap,
+        D3DDescriptorHeap* textureHeap,
+        D3DDescriptorHeap* samplerHeap,
         D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
         m_impl(make_unique<Impl>(move(attributes), indices, move(constants), textureHeap, samplerHeap, primitiveTopology))
 
@@ -254,8 +254,8 @@ namespace DX {
         const vector<D3DAttribute*>& attributes,
         D3DIndex* indices,
         const std::vector<D3DConstant*>& constants,
-        DirectX::DescriptorHeap* textureHeap,
-        DirectX::DescriptorHeap* samplerHeap,
+        D3DDescriptorHeap* textureHeap,
+        D3DDescriptorHeap* samplerHeap,
         D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) : 
         m_impl(make_unique<Impl>(attributes, indices, constants, textureHeap, samplerHeap, primitiveTopology))
     {

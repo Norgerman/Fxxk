@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "Fxxk.h"
+#include <D3DDescriptorHeap.h>
 #include <D3DScene.h>
 #include <D3DObject.h>
 #include <D3DConstant.h>
@@ -119,9 +120,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     std::vector<ComPtr<ID3D12Resource>> textures;
     ComPtr<ID3D12Resource> texture = nullptr;
     std::vector<wstring> textureFiles = { s + L"\\a.png", s + L"\\b.png" };
-    std::shared_ptr<DescriptorHeap> textureHeap = make_shared<DescriptorHeap>(g_scene->Device(), 2);
-    std::shared_ptr<DescriptorHeap> textureHeap2 = make_shared<DescriptorHeap>(g_scene->Device(), 2);
-    std::shared_ptr<DescriptorHeap> samplerHeap = make_shared<DescriptorHeap>(g_scene->Device(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
+    std::shared_ptr<D3DDescriptorHeap> textureHeap = make_shared<D3DDescriptorHeap>(g_scene->Device(), 2);
+    std::shared_ptr<D3DDescriptorHeap> textureHeap2 = make_shared<D3DDescriptorHeap>(g_scene->Device(), 2);
+    std::shared_ptr<D3DDescriptorHeap> samplerHeap = make_shared<D3DDescriptorHeap>(g_scene->Device(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
     size_t idx = 0;
 
     ResourceUploadBatch resourceUpload(g_scene->Device());

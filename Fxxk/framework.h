@@ -16,7 +16,6 @@
 #include <WICTextureLoader.h>
 #include <VertexTypes.h>
 #include <ResourceUploadBatch.h>
-#include <DescriptorHeap.h>
 #include <DirectXHelpers.h>
 #include <CommonStates.h>
 #include <wil/result.h>

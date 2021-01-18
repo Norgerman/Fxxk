@@ -26,6 +26,7 @@
     <ClInclude Include="include\D3DIndex.h" />
     <ClInclude Include="include\D3DObject.h" />
     <ClInclude Include="include\D3DScene.h" />
+    <ClInclude Include="include\D3DDescriptorHeap.h" />
     <ClInclude Include="include\export.h" />
     <ClInclude Include="src\d3dx12.h" />
     <ClInclude Include="src\StepTimer.h" />
@@ -38,6 +39,7 @@
     <ClCompile Include="src\D3DIndex.cpp" />
     <ClCompile Include="src\D3DObject.cpp" />
     <ClCompile Include="src\D3DScene.cpp" />
+    <ClCompile Include="src\D3DDescriptorHeap.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
   </ItemGroup>
   <ItemGroup>
