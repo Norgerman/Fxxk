@@ -3,9 +3,10 @@
 #include <d3d12.h>
 #include <vector>
 #include <D3DData.h>
+#include <export.h>
 
 namespace DX {
-    class __declspec(dllexport) D3DAttribute :
+    class dllexport D3DAttribute :
         public D3DData
     {
     public:
@@ -29,6 +30,8 @@ namespace DX {
             m_view.SizeInBytes = ByteSize();
             m_view.StrideInBytes = m_stride;
         }
+
+
         void AppendElement(uint32_t solt, std::vector<D3D12_INPUT_ELEMENT_DESC>& output) const;
         const D3D12_VERTEX_BUFFER_VIEW& BufferView() const;
     protected:

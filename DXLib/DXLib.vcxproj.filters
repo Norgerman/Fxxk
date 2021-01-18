@@ -36,10 +36,10 @@
     <ClInclude Include="include\D3DScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\StepTimer.h">
+    <ClInclude Include="src\d3dx12.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\d3dx12.h">
+    <ClInclude Include="include\export.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

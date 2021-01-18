@@ -14,8 +14,8 @@ namespace DX {
 
     void D3DAttribute::Alloc(D3DScene& scene)
     {
-        m_buffer = DirectX::GraphicsMemory::Get(scene.Device().Get()).Allocate(ByteSize());
-        m_view.BufferLocation = m_buffer.GpuAddress();
+        D3DData::Alloc(scene, ByteSize());
+        m_view.BufferLocation = GpuAddress();
     }
 
     const D3D12_VERTEX_BUFFER_VIEW& D3DAttribute::BufferView() const

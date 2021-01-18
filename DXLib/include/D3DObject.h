@@ -1,37 +1,33 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include <wrl/client.h>
 #include <DirectXMath.h>
 #include <RenderTargetState.h>
 #include <DescriptorHeap.h>
 #include <D3DIndex.h>
 #include <D3DAttribute.h>
 #include <D3DConstant.h>
+#include <export.h>
 
 namespace DX {
-    class __declspec(dllexport) D3DObject
+    class dllexport D3DObject
     {
     public:
-        template<typename T1, typename T2, typename T3>
         D3DObject(
-            T1&& attributes,
-            T2&& indices,
-            T3&& constants,
-            std::shared_ptr<DirectX::DescriptorHeap> textureHeap,
-            std::shared_ptr<DirectX::DescriptorHeap> samplerHeap,
-            D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST) :
-            m_attributes(std::forward<T1>(attributes)),
-            m_indices(std::forward<T2>(indices)),
-            m_constants(std::forward<T3>(constants)),
-            m_textureHeap(textureHeap),
-            m_samplerHeap(samplerHeap),
-            m_primitiveTopology(primitiveTopology),
-            m_transform(DirectX::XMMatrixIdentity()),
-            m_transformBuffer(nullptr, 4, 16)
-        {
-            m_transformBuffer.Update(&m_transform);
-        }
+            std::vector<D3DAttribute*>&& attributes,
+            D3DIndex* indices,
+            std::vector<D3DConstant*>&& constants,
+            DirectX::DescriptorHeap* textureHeap,
+            DirectX::DescriptorHeap* samplerHeap,
+            D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        D3DObject(
+            const std::vector<D3DAttribute*>& attributes,
+            D3DIndex* indices,
+            const std::vector<D3DConstant*>& constants,
+            DirectX::DescriptorHeap* textureHeap,
+            DirectX::DescriptorHeap* samplerHeap,
+            D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         void Initialize(
             D3DScene& scene,
             D3D12_SHADER_BYTECODE& vertexShader,
@@ -49,16 +45,9 @@ namespace DX {
         void UpdateAttribute(size_t index, const void* data);
         void Reset();
         void Render(D3DScene& scene);
+        ~D3DObject();
     private:
-        Microsoft::WRL::ComPtr<ID3D12PipelineState> m_pipelineState;
-        Microsoft::WRL::ComPtr<ID3D12RootSignature> m_rootSignature;
-        std::vector<std::shared_ptr<D3DAttribute>> m_attributes;
-        std::vector<std::shared_ptr<D3DConstant>> m_constants;
-        std::shared_ptr<DirectX::DescriptorHeap> m_textureHeap;
-        std::shared_ptr<DirectX::DescriptorHeap> m_samplerHeap;
-        D3DConstant m_transformBuffer;
-        std::shared_ptr<D3DIndex> m_indices;
-        DirectX::XMMATRIX m_transform;
-        D3D12_PRIMITIVE_TOPOLOGY m_primitiveTopology;
+        class Impl;
+        std::unique_ptr<Impl> m_impl;
     };
 }

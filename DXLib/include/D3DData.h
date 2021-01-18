@@ -1,12 +1,14 @@
 #pragma once
 #include <cstdint>
 #include <memory>
-#include <GraphicsMemory.h>
+#include <d3d12.h>
+#include <functional>
+#include <export.h>
 
 namespace DX {
     class D3DScene;
 
-    class __declspec(dllexport) D3DData
+    class dllexport D3DData
     {
     public:
         D3DData();
@@ -20,14 +22,13 @@ namespace DX {
         const void* Data() const;
         virtual void Reset();
         virtual D3D12_GPU_VIRTUAL_ADDRESS GpuAddress() const;
+        virtual ~D3DData();
     protected:
         virtual bool ShouldUpload() const;
+        void Alloc(D3DScene& scene, size_t size, size_t alignment = 16U);
         virtual void Alloc(D3DScene& scene) = 0;
-
-        uint32_t m_elementSize;
-        uint32_t m_size;
-        DirectX::GraphicsResource m_buffer;
-        const void* m_data;
-        bool m_dirty;
+    private:
+        class Impl;
+        std::unique_ptr<Impl> m_impl;
     };
 }

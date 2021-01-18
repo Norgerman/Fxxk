@@ -13,13 +13,13 @@ namespace DX {
         m_view()
     {
         m_view.SizeInBytes = ByteSize();
-        m_view.Format = m_elementSize == 4 ? DXGI_FORMAT::DXGI_FORMAT_R32_UINT : DXGI_FORMAT::DXGI_FORMAT_R16_UINT;
+        m_view.Format = ElementSize() == 4 ? DXGI_FORMAT::DXGI_FORMAT_R32_UINT : DXGI_FORMAT::DXGI_FORMAT_R16_UINT;
     }
 
     void D3DIndex::Alloc(D3DScene& scene)
     {
-        m_buffer = DirectX::GraphicsMemory::Get(scene.Device().Get()).Allocate(ByteSize());
-        m_view.BufferLocation = m_buffer.GpuAddress();
+        D3DData::Alloc(scene, ByteSize());
+        m_view.BufferLocation = GpuAddress();
     }
 
     const D3D12_INDEX_BUFFER_VIEW& D3DIndex::BufferView() const

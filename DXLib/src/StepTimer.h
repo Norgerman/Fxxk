@@ -11,7 +11,7 @@
 namespace DX
 {
     // Helper class for animation and simulation timing.
-    class __declspec(dllexport) StepTimer
+    class StepTimer
     {
     public:
         StepTimer() noexcept(false) :

@@ -1,8 +1,9 @@
 #pragma once
 #include <D3DData.h>
+#include <export.h>
 
 namespace DX {
-    class __declspec(dllexport) D3DConstant : public D3DData
+    class dllexport D3DConstant : public D3DData
     {
     public:
         D3DConstant();

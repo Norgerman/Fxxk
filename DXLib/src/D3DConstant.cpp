@@ -17,6 +17,6 @@ namespace DX {
     {
         const size_t alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
         const size_t alignedSize = (ByteSize() + alignment - 1) & ~(alignment - 1);
-        m_buffer = DirectX::GraphicsMemory::Get(scene.Device().Get()).Allocate(alignedSize, alignment);
+        D3DData::Alloc(scene, alignedSize, alignment);
     }
 }

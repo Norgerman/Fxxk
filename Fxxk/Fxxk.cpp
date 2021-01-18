@@ -144,25 +144,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     std::vector<ComPtr<ID3D12Resource>> textures;
     ComPtr<ID3D12Resource> texture = nullptr;
     std::vector<wstring> textureFiles = { s + L"\\a.png", s + L"\\b.png" };
-    std::shared_ptr<DescriptorHeap> textureHeap = make_shared<DescriptorHeap>(g_scene->Device().Get(), 2);
-    std::shared_ptr<DescriptorHeap> textureHeap2 = make_shared<DescriptorHeap>(g_scene->Device().Get(), 2);
-    std::shared_ptr<DescriptorHeap> samplerHeap = make_shared<DescriptorHeap>(g_scene->Device().Get(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
+    std::shared_ptr<DescriptorHeap> textureHeap = make_shared<DescriptorHeap>(g_scene->Device(), 2);
+    std::shared_ptr<DescriptorHeap> textureHeap2 = make_shared<DescriptorHeap>(g_scene->Device(), 2);
+    std::shared_ptr<DescriptorHeap> samplerHeap = make_shared<DescriptorHeap>(g_scene->Device(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
     size_t idx = 0;
 
-    ResourceUploadBatch resourceUpload(g_scene->Device().Get());
+    ResourceUploadBatch resourceUpload(g_scene->Device());
     resourceUpload.Begin();
 
 
     for (auto& element : textureFiles)
     {
-        hr = DirectX::CreateWICTextureFromFile(g_scene->Device().Get(), resourceUpload, element.data(), &texture, false);
+        hr = DirectX::CreateWICTextureFromFile(g_scene->Device(), resourceUpload, element.data(), &texture, false);
         THROW_IF_FAILED(hr);
         textures.push_back(texture);
-        CreateShaderResourceView(g_scene->Device().Get(), texture.Get(), textureHeap->GetCpuHandle(idx));
-        CreateShaderResourceView(g_scene->Device().Get(), texture.Get(), textureHeap2->GetCpuHandle((idx + 1) % 2));
+        CreateShaderResourceView(g_scene->Device(), texture.Get(), textureHeap->GetCpuHandle(idx));
+        CreateShaderResourceView(g_scene->Device(), texture.Get(), textureHeap2->GetCpuHandle((idx + 1) % 2));
         idx++;
     }
-    resourceUpload.End(g_scene->CommandQueue().Get()).wait();
+    resourceUpload.End(g_scene->CommandQueue()).wait();
     g_scene->Device()->CreateSampler(&samplerState, samplerHeap->GetCpuHandle(0));
 
     DirectX::VertexPositionNormalTexture vertices[] = {
@@ -228,20 +228,33 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
          make_shared<D3DConstant>(&color, 4, 4)
     };
 
+    vector<D3DAttribute*> attributePtr;
+    vector<D3DConstant*> constantPtr;
+
+    for (auto& p : attributes)
+    {
+        attributePtr.push_back(p.get());
+    }
+
+    for (auto& p : constants)
+    {
+        constantPtr.push_back(p.get());
+    }
+
     D3DObject obj1(
-        attributes,
-        index,
-        constants,
-        textureHeap,
-        samplerHeap
+        attributePtr,
+        index.get(),
+        constantPtr,
+        textureHeap.get(),
+        samplerHeap.get()
     );
 
     D3DObject obj2(
-        attributes,
-        index,
-        constants,
-        textureHeap2,
-        samplerHeap
+        attributePtr,
+        index.get(),
+        constantPtr,
+        textureHeap2.get(),
+        samplerHeap.get()
     );
 
     obj1.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, Global::defaultRasterizerStateDesc, renderTargetState);
@@ -252,14 +265,52 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     g_scene->SetRenderList(std::initializer_list<D3DObject*>{ &obj1, & obj2 });
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT1));
-
-    MSG msg = {};
     uint32_t count = 0;
     float scale = 1;
     float step = 0.01f;
     float angle = 0;
     float angleStep = 1;
+
+    g_scene->OnUpdate([&](D3DScene& scene, double time) -> void
+    {
+        scale += step;
+        angle += angleStep;
+        count++;
+
+        if (angle > 360)
+        {
+            angle -= 360;
+        }
+
+        if (scale > 1.0f || scale < 0.1)
+        {
+            step = -step;
+        }
+
+
+        textureMatrixX[0] = scale;
+        textureMatrixY[5] = scale;
+
+        if (count == 10)
+        {
+            count = 0;
+            color[0] = Randf();
+            color[1] = Randf();
+            color[2] = Randf();
+            color[3] = Randf();
+        }
+
+        attributes[1]->Update(textureMatrixX);
+        constants[0]->Update(textureMatrixY);
+        constants[1]->Update(color);
+
+        obj1.UpdateTransform(Transform(g_scene->Viewport(), angle, scale, w, h));
+        obj2.UpdateTransform(Transform(g_scene->Viewport(), angle * 2, scale, w, h));
+    });
+
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT1));
+
+    MSG msg = {};
 
     while (WM_QUIT != msg.message)
     {
@@ -270,39 +321,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
         else
         {
-            scale += step;
-            angle += angleStep;
-            count++;
-
-            if (angle > 360)
-            {
-                angle -= 360;
-            }
-
-            if (scale > 1.0f || scale < 0.1)
-            {
-                step = -step;
-            }
-
-
-            textureMatrixX[0] = scale;
-            textureMatrixY[5] = scale;
-
-            if (count == 10)
-            {
-                count = 0;
-                color[0] = Randf();
-                color[1] = Randf();
-                color[2] = Randf();
-                color[3] = Randf();
-            }
-
-            attributes[1]->Update(textureMatrixX);
-            constants[0]->Update(textureMatrixY);
-            constants[1]->Update(color);
-
-            obj1.UpdateTransform(Transform(g_scene->Viewport(), angle, scale, w, h));
-            obj2.UpdateTransform(Transform(g_scene->Viewport(), angle * 2, scale, w, h));
             g_scene->Tick();
         }
     }

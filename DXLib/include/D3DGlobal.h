@@ -2,6 +2,7 @@
 #include <array>
 #include <DirectXMath.h>
 #include <d3d12.h>
+#include <export.h>
 
 namespace DX {
     class D3DScene;
@@ -20,6 +21,6 @@ namespace DX {
                 FALSE,
                 FALSE
         };
-        DirectX::XMMATRIX __declspec(dllexport) Project(D3DScene& scene);
+        DirectX::XMMATRIX dllexport Project(D3DScene& scene);
     }
 }
