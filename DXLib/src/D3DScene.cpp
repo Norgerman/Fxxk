@@ -22,11 +22,11 @@ namespace DX {
     class D3DScene::Impl
     {
     public:
-        Impl(D3DScene* owner, array<float, 4>&& backgroundColor, function<DirectX::XMMATRIX(D3DScene&)>&& buildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
+        Impl(D3DScene* owner, array<float, 4>&& backgroundColor, function<void(D3DScene&)>&& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
             m_window(nullptr),
             m_owner(owner),
             m_backgroundColor(move(backgroundColor)),
-            m_buildProjection(move(buildProjection)),
+            m_rebuildProjection(move(rebuildProjection)),
             m_featureLevel(featureLevel),
             m_backBufferIndex(0),
             m_rtvDescriptorSize(0),
@@ -41,11 +41,11 @@ namespace DX {
 
         }
 
-        Impl(D3DScene* owner, const array<float, 4>& backgroundColor, const function<DirectX::XMMATRIX(D3DScene&)>& buildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
+        Impl(D3DScene* owner, const array<float, 4>& backgroundColor, const function<void(D3DScene&)>& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
             m_window(nullptr),
             m_owner(owner),
             m_backgroundColor(backgroundColor),
-            m_buildProjection(buildProjection),
+            m_rebuildProjection(rebuildProjection),
             m_featureLevel(featureLevel),
             m_backBufferIndex(0),
             m_rtvDescriptorSize(0),
@@ -167,6 +167,18 @@ namespace DX {
         void SetRenderList(std::vector<D3DObject*>&& objects)
         {
             m_objects = move(objects);
+        }
+
+        void UpdateProjection(const DirectX::XMMATRIX& projection)
+        {
+            m_projection = projection;
+            m_projectionConstant.Update(&m_projection);
+        }
+
+        void UpdateProjection(DirectX::XMMATRIX&& projection)
+        {
+            m_projection = projection;
+            m_projectionConstant.Update(&m_projection);
         }
 
         ~Impl()
@@ -482,8 +494,7 @@ namespace DX {
             m_d3dDevice->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
             // Initialize windows-size dependent objects here.
-            m_projection = m_buildProjection(*this->m_owner);
-            m_projectionConstant.Update(&m_projection);
+            m_rebuildProjection(*this->m_owner);
         }
 
         void WaitForGpu() noexcept
@@ -625,7 +636,7 @@ namespace DX {
 
         unique_ptr<DirectX::GraphicsMemory> m_memory;
 
-        function<DirectX::XMMATRIX(D3DScene&)> m_buildProjection;
+        function<void(D3DScene&)> m_rebuildProjection;
         function<void(D3DScene&, double)> m_update;
         array<float, 4> m_backgroundColor;
 
@@ -636,13 +647,13 @@ namespace DX {
     };
 
 
-    D3DScene::D3DScene(const std::array<float, 4>& backgroundColor, const std::function<DirectX::XMMATRIX(D3DScene&)>& buildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
-        m_impl(make_unique<Impl>(this, backgroundColor, buildProjection, featureLevel))
+    D3DScene::D3DScene(const std::array<float, 4>& backgroundColor, const std::function<void(D3DScene&)>& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
+        m_impl(make_unique<Impl>(this, backgroundColor, rebuildProjection, featureLevel))
     {
 
     }
-    D3DScene::D3DScene(std::array<float, 4>&& backgroundColor, std::function<DirectX::XMMATRIX(D3DScene&)>&& buildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
-        m_impl(make_unique<Impl>(this, move(backgroundColor), move(buildProjection), featureLevel))
+    D3DScene::D3DScene(std::array<float, 4>&& backgroundColor, std::function<void(D3DScene&)>&& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
+        m_impl(make_unique<Impl>(this, move(backgroundColor), move(rebuildProjection), featureLevel))
     {
 
     }
@@ -697,6 +708,16 @@ namespace DX {
     void D3DScene::SetRenderList(std::vector<D3DObject*>&& objects)
     {
         m_impl->SetRenderList(objects);
+    }
+
+    void D3DScene::UpdateProjection(const XMMATRIX& projection)
+    {
+        m_impl->UpdateProjection(projection);
+    }
+
+    void D3DScene::UpdateProjection(XMMATRIX&& projection)
+    {
+        m_impl->UpdateProjection(move(projection));
     }
 
     void D3DScene::OnUpdate(const function<void(D3DScene&, double)>& update)

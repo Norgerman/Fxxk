@@ -31,8 +31,8 @@ namespace DX {
 
         }
 
-        D3DScene(const std::array<float, 4>& backgroundColor, const std::function<DirectX::XMMATRIX(D3DScene&)>& buildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept;
-        D3DScene(std::array<float, 4>&& backgroundColor, std::function<DirectX::XMMATRIX(D3DScene&)>&& buildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept;
+        D3DScene(const std::array<float, 4>& backgroundColor, const std::function<void(D3DScene&)>& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept;
+        D3DScene(std::array<float, 4>&& backgroundColor, std::function<void(D3DScene&)>&& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept;
 
         ~D3DScene();
 
@@ -58,7 +58,8 @@ namespace DX {
         void OnUpdate(std::function<void(D3DScene&, double)>&& update);
         void SetRenderList(const std::vector<D3DObject*>& objects);
         void SetRenderList(std::vector<D3DObject*>&& objects);
-
+        void UpdateProjection(const DirectX::XMMATRIX& projection);
+        void UpdateProjection(DirectX::XMMATRIX&& projection);
     private:
         class Impl;
         std::unique_ptr<Impl> m_impl;

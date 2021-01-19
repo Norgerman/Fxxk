@@ -1,7 +1,7 @@
 #include <D3DGlobal.h>
 #include <D3DScene.h>
 
-DirectX::XMMATRIX DX::Global::Project(D3DScene& scene)
+void DX::Global::Project(D3DScene& scene)
 {
     float projectionMatrixData[] = {
            1 / scene.Viewport().Width * 2, 0.0f,  0.0f, 0.0f,
@@ -10,5 +10,5 @@ DirectX::XMMATRIX DX::Global::Project(D3DScene& scene)
            -1.0f, -1.0f,  0.0f, 1.0f,
     };
 
-    return DirectX::XMMATRIX(projectionMatrixData);
+    scene.UpdateProjection(DirectX::XMMATRIX(projectionMatrixData));
 }

@@ -21,6 +21,6 @@ namespace DX {
                 FALSE,
                 FALSE
         };
-        DirectX::XMMATRIX dllexport Project(D3DScene& scene);
+       void dllexport Project(D3DScene& scene);
     }
 }
