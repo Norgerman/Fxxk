@@ -138,6 +138,10 @@ namespace DX
                 BlendOperation BlendOpAlpha;
                 LogicOperation LogicOp;
                 ColorWriteEnable RenderTargetWriteMask;
+
+                static RenderTargetBlendDescription Default = {
+                     false, false, Blend::One, Blend::Zero, BlendOperation::Add, Blend::One, Blend::Zero, BlendOperation::Add, LogicOperation::Noop, ColorWriteEnable::All
+                };
             };
 
             [System::Runtime::InteropServices::StructLayout(System::Runtime::InteropServices::LayoutKind::Sequential)]
@@ -182,18 +186,9 @@ namespace DX
                     }
                 }
 
-                static BlendDescription Opaque = BlendDescription(1);
+                static BlendDescription Opaque = BlendDescription(false, false, gcnew array<RenderTargetBlendDescription>{  RenderTargetBlendDescription::Default });
 
             private:
-                BlendDescription(int) :
-                    AlphaToCoverageEnable(false),
-                    IndependentBlendEnable(false)
-                {
-                    Clear();
-                    RenderTarget[0] = {
-                        false, false, Blend::One, Blend::Zero, BlendOperation::Add, Blend::One, Blend::Zero, BlendOperation::Add, LogicOperation::Noop, ColorWriteEnable::All
-                    };
-                }
 
                 void Clear()
                 {
