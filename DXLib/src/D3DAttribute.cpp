@@ -12,9 +12,9 @@ namespace DX {
         }
     }
 
-    void D3DAttribute::Alloc(D3DScene& scene)
+    void D3DAttribute::Alloc()
     {
-        D3DData::Alloc(scene, ByteSize());
+        D3DData::Alloc(ByteSize());
         m_view.BufferLocation = GpuAddress();
     }
 

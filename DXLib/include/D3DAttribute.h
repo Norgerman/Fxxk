@@ -10,19 +10,15 @@ namespace DX {
         public D3DData
     {
     public:
-        D3DAttribute() : D3DAttribute(nullptr, 0, 0, 0, std::initializer_list<D3D12_INPUT_ELEMENT_DESC>())
-        {
-
-        }
         template<typename T>
         D3DAttribute(
-            const void* data,
+            D3DScene* scene,
             uint32_t elementSize,
             uint32_t size,
             uint32_t stride,
             T&& elements
         ) :
-            D3DData(data, elementSize, size),
+            D3DData(scene, elementSize, size),
             m_elements(std::forward<T>(elements)),
             m_stride(stride),
             m_view()
@@ -35,7 +31,7 @@ namespace DX {
         void AppendElement(uint32_t solt, std::vector<D3D12_INPUT_ELEMENT_DESC>& output) const;
         const D3D12_VERTEX_BUFFER_VIEW& BufferView() const;
     protected:
-        virtual void Alloc(D3DScene& scene);
+        virtual void Alloc();
     private:
         uint32_t m_stride;
         D3D12_VERTEX_BUFFER_VIEW m_view;

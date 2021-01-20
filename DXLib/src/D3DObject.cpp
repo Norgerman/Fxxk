@@ -27,10 +27,8 @@ namespace DX {
             m_textureHeap(textureHeap),
             m_samplerHeap(samplerHeap),
             m_primitiveTopology(primitiveTopology),
-            m_transform(DirectX::XMMatrixIdentity()),
-            m_transformBuffer(nullptr, 4, 16)
+            m_transform(DirectX::XMMatrixIdentity())
         {
-            m_transformBuffer.Update(&m_transform);
         }
 
         Impl(
@@ -46,10 +44,8 @@ namespace DX {
             m_textureHeap(textureHeap),
             m_samplerHeap(samplerHeap),
             m_primitiveTopology(primitiveTopology),
-            m_transform(DirectX::XMMatrixIdentity()),
-            m_transformBuffer(nullptr, 4, 16)
+            m_transform(DirectX::XMMatrixIdentity())
         {
-            m_transformBuffer.Update(&m_transform);
         }
 
         void Initialize(
@@ -128,12 +124,15 @@ namespace DX {
             THROW_IF_FAILED(hr);
 
             pd.CreatePipelineState(scene.Device(), m_rootSignature.Get(), vertexShader, pixelShader, &m_pipelineState);
+
+            m_transformBuffer = make_unique<D3DConstant>(&scene, 4, 16);
+            m_transformBuffer->Update(&m_transform);
         }
 
         void UpdateTransform(const XMMATRIX& transform)
         {
             m_transform = transform;
-            m_transformBuffer.Update(&m_transform);
+            m_transformBuffer->Update(&m_transform);
         }
 
         void UpdateIndices(const void* data)
@@ -153,18 +152,6 @@ namespace DX {
 
         void Render(D3DScene& scene)
         {
-            m_transformBuffer.Upload(scene);
-            m_indices->Upload(scene);
-
-            for (auto& attribute : m_attributes)
-            {
-                attribute->Upload(scene);
-            }
-            for (auto& constant : m_constants)
-            {
-                constant->Upload(scene);
-            }
-
             auto commandList = scene.CommandList();
             uint32_t idx = 2;
             ID3D12DescriptorHeap* heaps[] = { m_textureHeap->Heap(), m_samplerHeap->Heap() };
@@ -175,7 +162,7 @@ namespace DX {
 
             // constants
             commandList->SetGraphicsRootConstantBufferView(0, scene.Projection().GpuAddress());
-            commandList->SetGraphicsRootConstantBufferView(1, m_transformBuffer.GpuAddress());
+            commandList->SetGraphicsRootConstantBufferView(1, m_transformBuffer->GpuAddress());
             for (auto& constant : m_constants)
             {
                 commandList->SetGraphicsRootConstantBufferView(idx, constant->GpuAddress());
@@ -219,7 +206,7 @@ namespace DX {
                 constant->Reset();
             }
             m_indices->Reset();
-            m_transformBuffer.Reset();
+            m_transformBuffer->Reset();
             m_pipelineState.Reset();
             m_rootSignature.Reset();
         }
@@ -231,7 +218,7 @@ namespace DX {
         vector<D3DConstant*> m_constants;
         D3DDescriptorHeap* m_textureHeap;
         D3DDescriptorHeap* m_samplerHeap;
-        D3DConstant m_transformBuffer;
+        unique_ptr<D3DConstant> m_transformBuffer;
         D3DIndex* m_indices;
         XMMATRIX m_transform;
         D3D12_PRIMITIVE_TOPOLOGY m_primitiveTopology;

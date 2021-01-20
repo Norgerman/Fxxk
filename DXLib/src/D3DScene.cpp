@@ -33,12 +33,10 @@ namespace DX {
             m_viewport({ 0.0f, 0.0f, 0.0f, 0.0f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH }),
             m_fenceValues{},
             m_projection(DirectX::XMMatrixIdentity()),
-            m_projectionConstant(nullptr, 4, 16),
             m_suspended(false),
             m_objects(),
             m_update([](D3DScene&, double) -> void {})
         {
-
         }
 
         Impl(D3DScene* owner, const array<float, 4>& backgroundColor, const function<void(D3DScene&)>& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
@@ -52,12 +50,10 @@ namespace DX {
             m_viewport({ 0.0f, 0.0f, 0.0f, 0.0f, D3D12_MIN_DEPTH, D3D12_MAX_DEPTH }),
             m_fenceValues{},
             m_projection(DirectX::XMMatrixIdentity()),
-            m_projectionConstant(nullptr, 4, 16),
             m_suspended(false),
             m_objects(),
             m_update([](D3DScene&, double) -> void {})
         {
-
         }
 
         // Initialization and management
@@ -156,7 +152,7 @@ namespace DX {
 
         const D3DConstant& Projection() const
         {
-            return m_projectionConstant;
+            return *m_projectionConstant;
         }
 
         void SetRenderList(const std::vector<D3DObject*>& objects)
@@ -172,13 +168,13 @@ namespace DX {
         void UpdateProjection(const DirectX::XMMATRIX& projection)
         {
             m_projection = projection;
-            m_projectionConstant.Update(&m_projection);
+            m_projectionConstant->Update(&m_projection);
         }
 
         void UpdateProjection(DirectX::XMMATRIX&& projection)
         {
             m_projection = projection;
-            m_projectionConstant.Update(&m_projection);
+            m_projectionConstant->Update(&m_projection);
         }
 
         ~Impl()
@@ -198,8 +194,6 @@ namespace DX {
             {
                 return;
             }
-
-            m_projectionConstant.Upload(*this->m_owner);
 
             // Prepare the command list to render a new frame.
             Clear();
@@ -367,6 +361,8 @@ namespace DX {
 
             // Initialize device dependent objects here (independent of window size).
             m_memory = std::make_unique<GraphicsMemory>(m_d3dDevice.Get());
+            m_projectionConstant = std::make_unique<D3DConstant>(this->m_owner, 4, 16);
+            m_projectionConstant->Update(&m_projection);
         }
 
         void CreateResources()
@@ -596,7 +592,7 @@ namespace DX {
             m_d3dDevice.Reset();
             m_dxgiFactory.Reset();
             m_memory.reset();
-            m_projectionConstant.Reset();
+            m_projectionConstant->Reset();
             for (auto& obj : m_objects)
             {
                 obj->Reset();
@@ -627,7 +623,7 @@ namespace DX {
         Event m_fenceEvent;
         D3D12_VIEWPORT m_viewport;
         XMMATRIX m_projection;
-        D3DConstant m_projectionConstant;
+        unique_ptr<D3DConstant> m_projectionConstant;
 
         // Rendering resources
         ComPtr<IDXGISwapChain3> m_swapChain;

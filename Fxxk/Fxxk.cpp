@@ -3,13 +3,14 @@
 
 #include "framework.h"
 #include "Fxxk.h"
+#include <fstream>
 #include <D3DDescriptorHeap.h>
 #include <D3DScene.h>
 #include <D3DObject.h>
 #include <D3DConstant.h>
 #include <D3DAttribute.h>
 #include <D3DIndex.h>
-#include <fstream>
+#include <TextureLoader.h>
 
 #define M_PI acosf(-1.0)
 
@@ -50,8 +51,6 @@ inline DirectX::XMMATRIX Transform(const D3D12_VIEWPORT& viewport, float angle, 
     auto result = DirectX::XMMatrixMultiply(s, t);
 
     return DirectX::XMMatrixMultiply(result, r);
-
-    //return DirectX::XMMatrixIdentity();
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -125,20 +124,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     std::shared_ptr<D3DDescriptorHeap> samplerHeap = make_shared<D3DDescriptorHeap>(g_scene->Device(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, 1);
     size_t idx = 0;
 
-    ResourceUploadBatch resourceUpload(g_scene->Device());
-    resourceUpload.Begin();
-
-
+    TextureLoader loader(g_scene->Device(), g_scene->CommandQueue());
+    
+    loader.Begin();
+    
     for (auto& element : textureFiles)
     {
-        hr = DirectX::CreateWICTextureFromFile(g_scene->Device(), resourceUpload, element.data(), &texture, false);
-        THROW_IF_FAILED(hr);
+        loader.CreateTexture(element.data(), &texture, false);
         textures.push_back(texture);
-        CreateShaderResourceView(g_scene->Device(), texture.Get(), textureHeap->GetCpuHandle(idx));
-        CreateShaderResourceView(g_scene->Device(), texture.Get(), textureHeap2->GetCpuHandle((idx + 1) % 2));
+        loader.CreateShaderResourceView(texture.Get(), textureHeap->GetCpuHandle(idx));
+        loader.CreateShaderResourceView(texture.Get(), textureHeap2->GetCpuHandle((idx + 1) % 2));
         idx++;
     }
-    resourceUpload.End(g_scene->CommandQueue()).wait();
+    
+    loader.End().Wait();
+    
     g_scene->Device()->CreateSampler(&samplerState, samplerHeap->GetCpuHandle(0));
 
     DirectX::VertexPositionNormalTexture vertices[] = {
@@ -195,14 +195,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     RenderTargetState renderTargetState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
     vector<shared_ptr<D3DAttribute>> attributes = {
-        make_shared<D3DAttribute>(&vertices, static_cast<uint32_t>(sizeof(VertexPositionNormalTexture)), 4, static_cast <uint32_t>(sizeof(VertexPositionNormalTexture)), verticesDesc),
-        make_shared<D3DAttribute>(&textureMatrixX, static_cast<uint32_t>(sizeof(float)), 9, static_cast <uint32_t>(sizeof(float) * 9), textureMatrixDesc)
+        make_shared<D3DAttribute>(g_scene.get(), static_cast<uint32_t>(sizeof(VertexPositionNormalTexture)), 4, static_cast <uint32_t>(sizeof(VertexPositionNormalTexture)), verticesDesc),
+        make_shared<D3DAttribute>(g_scene.get(), static_cast<uint32_t>(sizeof(float)), 9, static_cast <uint32_t>(sizeof(float) * 9), textureMatrixDesc)
     };
-    auto index = make_shared<D3DIndex>(&indices, 4, 6);
+    auto index = make_shared<D3DIndex>(g_scene.get(), 4, 6);
     vector<shared_ptr<D3DConstant>> constants = {
-         make_shared<D3DConstant>(&textureMatrixY, 4, 16),
-         make_shared<D3DConstant>(&color, 4, 4)
+         make_shared<D3DConstant>(g_scene.get(), 4, 16),
+         make_shared<D3DConstant>(g_scene.get(), 4, 4)
     };
+
+    attributes[0]->Update(vertices);
+    attributes[1]->Update(textureMatrixX);
+    index->Update(indices);
+    constants[0]->Update(textureMatrixY);
+    constants[1]->Update(color);
 
     vector<D3DAttribute*> attributePtr;
     vector<D3DConstant*> constantPtr;

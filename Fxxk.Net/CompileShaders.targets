@@ -1,0 +1,29 @@
+﻿<Project>
+  <PropertyGroup>
+    <WindowsKitRootVersion Condition="$(WindowsKitRootVersion)==''">10</WindowsKitRootVersion>
+    <ShaderModel Condition="$(ShaderModel)==''">5_1</ShaderModel>
+    <ShaderAsmExtension Condition="$(ShaderAsmExtension)==''">asm</ShaderAsmExtension>
+    <ShaderBinExtension Condition="$(ShaderBinExtension)==''">cso</ShaderBinExtension>
+    <FxcArgs Condition="'$(Configuration)'=='Debug'">$(FxcArgs) /Od /Zi</FxcArgs>
+    <FxcArgs Condition="'$(Configuration)'!='Debug'">$(FxcArgs) /O3</FxcArgs>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <WindowsKitsRoot Condition="$(WindowsKitsRoot)==''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot$(WindowsKitRootVersion)', null, RegistryView.Registry32, RegistryView.Default))</WindowsKitsRoot>
+    <FxcPath>"$(WindowsKitsRoot)bin\$(WindowsKitVersion)\x64\fxc.exe"</FxcPath>
+  </PropertyGroup>
+
+  <Target Name="CompileShaders" AfterTargets="Build"
+					Inputs="@(CompileShader);%(CompileShader.Dependancies);%(CompileShader.SaveAsm);%(CompileShader.SaveDir)"
+					Outputs="@(CompileShader -> '%(SaveDir)\%(filename).$(ShaderBinExtension)');@(CompileShader -> '%(SaveDir)\%(filename).$(ShaderAsmExtension)')" >
+
+    <MakeDir Condition="!Exists('%(CompileShader.SaveDir)')" Directories="%(CompileShader.SaveDir)" />    
+
+    <Exec WorkingDirectory="$(ProjectDir)" Condition="%(SaveAsm) == 'True'"
+					Command="$(FxcPath) $(FxcArgs) &quot;%(fullpath)&quot; /T %(Shader)_$(ShaderModel) /E %(Entry) /Fo &quot;%(SaveDir)\%(filename).$(ShaderBinExtension)&quot; %(CompileShader.Arguments) /Fc &quot;%(SaveDir)\%(filename).$(ShaderAsmExtension)&quot;" />
+
+    <Exec WorkingDirectory="$(ProjectDir)" Condition="%(SaveAsm)!='True'"
+					Command="$(FxcPath) $(FxcArgs) &quot;%(fullpath)&quot; /T %(Shader)_$(ShaderModel) /E %(Entry) /Fo &quot;%(SaveDir)\%(filename).$(ShaderBinExtension)&quot; %(CompileShader.Arguments)" />
+
+  </Target>
+</Project>

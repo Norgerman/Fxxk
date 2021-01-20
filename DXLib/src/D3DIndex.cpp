@@ -3,22 +3,17 @@
 #include <D3DScene.h>
 
 namespace DX {
-    D3DIndex::D3DIndex() : D3DIndex(nullptr, 0, 0)
-    {
-
-    }
-
-    D3DIndex::D3DIndex(const void* data, uint32_t elementSize, uint32_t size) :
-        D3DData(data, elementSize, size),
+    D3DIndex::D3DIndex(D3DScene* scene, uint32_t elementSize, uint32_t size) :
+        D3DData(scene, elementSize, size),
         m_view()
     {
         m_view.SizeInBytes = ByteSize();
         m_view.Format = ElementSize() == 4 ? DXGI_FORMAT::DXGI_FORMAT_R32_UINT : DXGI_FORMAT::DXGI_FORMAT_R16_UINT;
     }
 
-    void D3DIndex::Alloc(D3DScene& scene)
+    void D3DIndex::Alloc()
     {
-        D3DData::Alloc(scene, ByteSize());
+        D3DData::Alloc(ByteSize());
         m_view.BufferLocation = GpuAddress();
     }
 

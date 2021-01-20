@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Fxxk.Net": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

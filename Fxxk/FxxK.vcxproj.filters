@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{555fdccf-e4e4-4200-8abe-aa1d5aaa9a04}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -40,10 +43,10 @@
     <Image Include="Fxxk.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="a.png">
+    <Image Include="..\Assets\a.png">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="b.png">
+    <Image Include="..\Assets\b.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
@@ -56,7 +59,11 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="PixelShader.hlsl" />
-    <Text Include="VertexShader.hlsl" />
+    <FxCompile Include="..\Shaders\PixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\VertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

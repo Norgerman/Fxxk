@@ -1,0 +1,115 @@
+{
+  "version": 3,
+  "targets": {
+    "net5.0-windows7.0": {
+      "DXLib/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/DXLib.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/DXLib.dll": {}
+        }
+      },
+      "DXLib.Net/1.0.0": {
+        "type": "project",
+        "dependencies": {
+          "DXLib": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/DXLib.Net.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/DXLib.Net.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "DXLib/1.0.0": {
+      "type": "project",
+      "path": "../DXLib/DXLib.vcxproj",
+      "msbuildProject": "../DXLib/DXLib.vcxproj"
+    },
+    "DXLib.Net/1.0.0": {
+      "type": "project",
+      "path": "../DXLib.Net/DXLib.Net.vcxproj",
+      "msbuildProject": "../DXLib.Net/DXLib.Net.vcxproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net5.0-windows7.0": [
+      "DXLib.Net >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\daodao\\.nuget\\packages\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\daodao\\Documents\\github\\Fxxk\\Fxxk.Net\\Fxxk.Net.csproj",
+      "projectName": "Fxxk.Net",
+      "projectPath": "C:\\Users\\daodao\\Documents\\github\\Fxxk\\Fxxk.Net\\Fxxk.Net.csproj",
+      "packagesPath": "C:\\Users\\daodao\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\daodao\\Documents\\github\\Fxxk\\Fxxk.Net\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\daodao\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net5.0-windows7.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Users\\daodao\\.dotnet\\NuGetFallbackFolder": {},
+        "https://api.nuget.org/v3/index.json": {},
+        "https://nuget.pkg.github.com/okawali/index.json": {}
+      },
+      "frameworks": {
+        "net5.0-windows7.0": {
+          "targetAlias": "net5.0-windows",
+          "projectReferences": {
+            "C:\\Users\\daodao\\Documents\\github\\Fxxk\\DXLib.Net\\DXLib.Net.vcxproj": {
+              "projectPath": "C:\\Users\\daodao\\Documents\\github\\Fxxk\\DXLib.Net\\DXLib.Net.vcxproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "net5.0-windows7.0": {
+        "targetAlias": "net5.0-windows",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.WindowsDesktop.App.WindowsForms": {
+            "privateAssets": "none"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.102\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

@@ -11,22 +11,17 @@ namespace DX {
     class dllexport D3DData
     {
     public:
-        D3DData();
-        D3DData(const D3DData& other);
-        D3DData(const void* data, uint32_t elementSize, uint32_t size);
+        D3DData(D3DScene* scene, uint32_t elementSize, uint32_t size);
         virtual void Update(const void* data);
-        virtual void Upload(D3DScene& scene);
         uint32_t Size() const;
         uint32_t ElementSize() const;
         uint32_t ByteSize() const;
-        const void* Data() const;
         virtual void Reset();
         virtual D3D12_GPU_VIRTUAL_ADDRESS GpuAddress() const;
         virtual ~D3DData();
     protected:
-        virtual bool ShouldUpload() const;
-        void Alloc(D3DScene& scene, size_t size, size_t alignment = 16U);
-        virtual void Alloc(D3DScene& scene) = 0;
+        void Alloc(size_t size, size_t alignment = 16U);
+        virtual void Alloc() = 0;
     private:
         class Impl;
         std::unique_ptr<Impl> m_impl;
