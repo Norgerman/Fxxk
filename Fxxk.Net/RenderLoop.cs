@@ -207,12 +207,10 @@ namespace Fxxk.Net
             if(renderCallback == null) throw new ArgumentNullException("renderCallback");
 
             form.Show();
-            using (var renderLoop = new RenderLoop(form) { UseApplicationDoEvents = useApplicationDoEvents })
+            using var renderLoop = new RenderLoop(form) { UseApplicationDoEvents = useApplicationDoEvents };
+            while (renderLoop.NextFrame())
             {
-                while(renderLoop.NextFrame())
-                {
-                    renderCallback();
-                }
+                renderCallback();
             }
         }
 

@@ -281,11 +281,7 @@ namespace Fxxk.Net
                 obj2.UpdateTransform(transform);
             };
 
-            using var loop = new RenderLoop(form);
-            while (loop.NextFrame())
-            {
-                scene.Tick();
-            }
+            RenderLoop.Run(form, scene.Tick);
         }
     }
 }
