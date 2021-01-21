@@ -12,6 +12,13 @@
     <Copy SourceFiles="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\DxLib.dll;$(SolutionDir)$(PlatformName)\$(ConfigurationName)\DxLib.pdb" DestinationFolder="$(OutDir)" />
   </Target>
 
+  <Target Name="RemoveFiles" AfterTargets="Clean">
+    <ItemGroup>
+      <_FilesToDelete Include="$(OutDir)**\*"/>
+    </ItemGroup>
+    <Delete Files="@(_FilesToDelete)"/>
+  </Target>
+    
   <ItemGroup>
     <ProjectReference Include="..\DXLib.Net\DXLib.Net.vcxproj" />
   </ItemGroup>
