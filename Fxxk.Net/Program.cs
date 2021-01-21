@@ -210,8 +210,6 @@ namespace Fxxk.Net
 
             scene.SetInactiveTargetUpdateTimeout(true, 1.0 / 30);
 
-            form.Show();
-
             form.Resize += (sender, e) =>
             {
                 if (form.WindowState == FormWindowState.Minimized)
@@ -238,7 +236,6 @@ namespace Fxxk.Net
             {
                 scene.OnDeactivated();
             };
-
 
             uint count = 0;
             float scale = 1;
