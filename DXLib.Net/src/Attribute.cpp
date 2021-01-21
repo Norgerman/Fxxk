@@ -9,36 +9,11 @@ namespace DX
     {
         using namespace std;
         using namespace System;
-        using namespace System::Collections::Generic;
         using namespace System::Buffers;
-        using namespace System::Runtime::InteropServices;
-        using namespace DX::Sharp::Direct3D12;
 
-        DX::InputElement InputElement::ToNative()
+        Attribute::Attribute(Scene3D^ scene, void* data, UInt32 elementSize, UInt32 size, UInt32 stride)
         {
-            IntPtr ptr = Marshal::StringToHGlobalAnsi(SemanticName);
-            
-            DX::InputElement r = {
-                static_cast<const char*>(ptr.ToPointer()),
-                SemanticIndex,
-                static_cast<DXGI_FORMAT>(Format),
-                AlignedByteOffset,
-                static_cast<D3D12_INPUT_CLASSIFICATION>(InputSlotClass),
-                InstanceDataStepRate
-            };
-
-            Marshal::FreeHGlobal(ptr);
-            return r;
-        }
-
-        Attribute::Attribute(Scene3D^ scene, void* data, UInt32 elementSize, UInt32 size, UInt32 stride, IEnumerable<InputElement>^ elements)
-        {
-            vector<DX::InputElement> r;
-            for each (auto % e in elements)
-            {
-                r.push_back(e.ToNative());
-            }
-            m_value = new D3DAttribute(scene->Value, elementSize, size, stride, move(r));
+            m_value = new D3DAttribute(scene->Value, elementSize, size, stride);
             m_value->Update(data);
         }
 
@@ -60,8 +35,8 @@ namespace DX
 
 
         generic<typename T> where T : value class
-            MemoryAttribute<T>::MemoryAttribute(Scene3D^ scene, Memory<T> data, UInt32 stride, IEnumerable<InputElement>^ elements) :
-            Attribute(scene, nullptr, static_cast<UInt32>(sizeof(T)), data.Length, stride, elements)
+            MemoryAttribute<T>::MemoryAttribute(Scene3D^ scene, Memory<T> data, UInt32 stride) :
+            Attribute(scene, nullptr, static_cast<UInt32>(sizeof(T)), data.Length, stride)
         {
             MemoryHandle^ handle = data.Pin();
             try

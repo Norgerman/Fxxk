@@ -153,6 +153,7 @@
     <ClInclude Include="include\Attribute.h" />
     <ClInclude Include="include\Constant.h" />
     <ClInclude Include="include\DescriptorHeapX.h" />
+    <ClInclude Include="include\Effect3D.h" />
     <ClInclude Include="include\Enums.hpp" />
     <ClInclude Include="include\Index.h" />
     <ClInclude Include="include\inline_array.hpp" />
@@ -168,6 +169,7 @@
     <ClCompile Include="src\Attribute.cpp" />
     <ClCompile Include="src\Constant.cpp" />
     <ClCompile Include="src\DescriptorHeapX.cpp" />
+    <ClCompile Include="src\Effect3D.cpp" />
     <ClCompile Include="src\Index.cpp" />
     <ClCompile Include="src\MathFunc.cpp" />
     <ClCompile Include="src\Object3D.cpp" />

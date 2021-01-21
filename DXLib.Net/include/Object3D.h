@@ -4,6 +4,7 @@
 #include <Constant.h>
 #include <Index.h>
 #include <Enums.hpp>
+#include <Effect3D.h>
 #include <DescriptorHeapX.h>
 #include <XMMatrix.h>
 
@@ -27,6 +28,7 @@ namespace DX
                 System::Collections::Generic::IEnumerable<Attribute^>^ attributes,
                 Index^ index,
                 System::Collections::Generic::IEnumerable<Constant^>^ constants,
+                Effect3D^ effect,
                 DescriptorHeap^ textureHeap,
                 DescriptorHeap^ samplerHeap,
                 Direct3D::PrimitiveTopology primitiveTopology
@@ -41,27 +43,7 @@ namespace DX
                 void UpdateConstant(size_t index, System::Memory<T> data);
             generic<typename T> where T : value class
                 void UpdateAttribute(size_t index, System::Memory<T> data);
-            void Initialize(
-                Scene3D^ scene,
-                System::Memory<System::Byte> vertexShader,
-                System::Memory<System::Byte> pixelShader,
-                Direct3D12::BlendDescription% blend,
-                Direct3D12::DepthStencilDescription% depthStencil,
-                Direct3D12::RasteriazerDescription% rasterizer,
-                DXGI::Format rtFormat,
-                DXGI::Format dsFormat,
-                Direct3D12::PrimitiveTopologyType primitiveTopology,
-                Direct3D12::IndexBufferStripCutValue stripCutValue);
-            void Initialize(
-                Scene3D^ scene,
-                System::Memory<System::Byte> vertexShader,
-                System::Memory<System::Byte> pixelShader,
-                Direct3D12::BlendDescription% blend,
-                Direct3D12::DepthStencilDescription% depthStencil,
-                Direct3D12::RasteriazerDescription% rasterizer,
-                DXGI::Format rtFormat,
-                DXGI::Format dsFormat
-            );
+            void Initialize(Scene3D^ scene);
             ~Object3D();
             !Object3D();
         private:
@@ -69,6 +51,7 @@ namespace DX
             System::Collections::Generic::IEnumerable<Attribute^>^ m_attributes;
             Index^ m_index;
             System::Collections::Generic::IEnumerable<Constant^>^ m_constants;
+            Effect3D^ m_effect;
             DescriptorHeap^ m_textureHeap;
             DescriptorHeap^ m_samplerHeap;
         };

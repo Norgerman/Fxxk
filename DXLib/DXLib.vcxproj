@@ -24,6 +24,7 @@
     <ClInclude Include="include\D3DData.h" />
     <ClInclude Include="include\D3DGlobal.h" />
     <ClInclude Include="include\D3DIndex.h" />
+    <ClInclude Include="include\D3DEffect.h" />
     <ClInclude Include="include\D3DObject.h" />
     <ClInclude Include="include\D3DScene.h" />
     <ClInclude Include="include\D3DDescriptorHeap.h" />
@@ -38,6 +39,7 @@
     <ClCompile Include="src\D3DData.cpp" />
     <ClCompile Include="src\D3DGlobal.cpp" />
     <ClCompile Include="src\D3DIndex.cpp" />
+    <ClCompile Include="src\D3DEffect.cpp" />
     <ClCompile Include="src\D3DObject.cpp" />
     <ClCompile Include="src\D3DScene.cpp" />
     <ClCompile Include="src\D3DDescriptorHeap.cpp" />

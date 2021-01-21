@@ -8,11 +8,11 @@ cbuffer VS_PROJECTION_BUFFER: register(b0) {
     matrix projection;
 };
 
-cbuffer VS_TRANSFORM_BUFFER: register(b1) {
+cbuffer VS_TRANSFORM_BUFFER: register(b2) {
     matrix transform;
 };
 
-cbuffer VS_TEX_BUFFER : register(b2) {
+cbuffer VS_TEX_BUFFER : register(b3) {
     float3x3 tex_mY;
 }
 

@@ -45,8 +45,16 @@ namespace Fxxk.Net
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
 
+            var texturePathA = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "a.png");
+            var texturePathB = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "b.png");
+            var textureDataA = File.ReadAllBytes(texturePathA);
+            var textureDataB = File.ReadAllBytes(texturePathB);
+            var vertexShader = File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "VertexShader.cso"));
+            var pixelShader = File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "PixelShader.cso"));
+
             using var form = new Form();
             using var scene = new Scene3D();
+
 #if DEBUG
             scene.EnableDebug();
 #endif
@@ -94,13 +102,14 @@ namespace Fxxk.Net
             textureMatrixY[0] = textureMatrixY[5] = textureMatrixY[10] = 1.0f;
 
 
-            var vertexInput = new List<InputElement>()
+            var inputs = new List<InputElement>()
             {
                 new InputElement()
                 {
                     SemanticName = "POS",
                     SemanticIndex = 0,
                     Format = Format.R32G32B32Float,
+                    InputSolt = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerVertexData,
                     InstanceDataStepRate = 0
@@ -110,6 +119,7 @@ namespace Fxxk.Net
                     SemanticName = "NORMAL",
                     SemanticIndex = 0,
                     Format = Format.R32G32B32Float,
+                    InputSolt = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerVertexData,
                     InstanceDataStepRate = 0
@@ -119,19 +129,17 @@ namespace Fxxk.Net
                     SemanticName = "TEXCOORD",
                     SemanticIndex = 0,
                     Format = Format.R32G32Float,
+                    InputSolt = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerVertexData,
                     InstanceDataStepRate = 0
-                }
-            };
-
-            var matatrixInput = new List<InputElement>()
-            {
+                },
                 new InputElement()
                 {
                     SemanticName = "TEXMATRIX",
                     SemanticIndex = 0,
                     Format = Format.R32G32B32Float,
+                    InputSolt = 1,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerInstanceData,
                     InstanceDataStepRate = 0
@@ -141,6 +149,7 @@ namespace Fxxk.Net
                     SemanticName = "TEXMATRIX",
                     SemanticIndex = 1,
                     Format = Format.R32G32B32Float,
+                    InputSolt = 1,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerInstanceData,
                     InstanceDataStepRate = 0
@@ -150,6 +159,7 @@ namespace Fxxk.Net
                     SemanticName = "TEXMATRIX",
                     SemanticIndex = 2,
                     Format = Format.R32G32B32Float,
+                    InputSolt = 1,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerInstanceData,
                     InstanceDataStepRate = 0
@@ -157,13 +167,17 @@ namespace Fxxk.Net
             };
 
             using var index = new MemoryIndex<uint>(scene, indices);
-            using var attribute1 = new MemoryAttribute<Vertex>(scene, vertices, (uint)sizeof(Vertex), vertexInput);
-            using var attribute2 = new DX.Sharp.Attribute(scene, textureMatrixX, 4, 9, 36, matatrixInput);
+            using var attribute1 = new MemoryAttribute<Vertex>(scene, vertices, (uint)sizeof(Vertex));
+            using var attribute2 = new DX.Sharp.Attribute(scene, textureMatrixX, 4, 9, 36);
             using var constant = new Constant(scene, textureMatrixY, 4, 16);
             using var constant2 = new Constant(scene, color, 4, 4);
             using var textureHeap1 = new DescriptorHeap(scene.Device, 2);
             using var textureHeap2 = new DescriptorHeap(scene.Device, 2);
             using var samplerHeap = new DescriptorHeap(scene.Device, DescriptorHeapType.Sampler, DescriptorHeapFlags.ShaderVisible, 1);
+            using var effect = new Effect3D(inputs, new Constant[] { constant2 }, 1, 2, 1);
+            using var loader = new TextureLoader(scene.Device, scene.CommandQueue);
+
+            effect.Initialize(scene, vertexShader, pixelShader, ref BlendDescription.Opaque, ref DepthStencilDescription.Default, ref RasteriazerDescription.Default, Format.B8G8R8A8UNorm, Format.D32Float);
 
             var textures = new List<Resource>()
             {
@@ -171,15 +185,9 @@ namespace Fxxk.Net
                 new Resource()
             };
 
-            var loader = new TextureLoader(scene.Device, scene.CommandQueue);
-            var texturePathA = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "a.png");
-            var texturePathB = Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "b.png");
-            var textureDataA = File.ReadAllBytes(texturePathA);
-            var textureDataB = File.ReadAllBytes(texturePathB);
-            var vertexShader = File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "VertexShader.cso"));
-            var pixelShader = File.ReadAllBytes(Path.Combine(Path.GetDirectoryName(AppContext.BaseDirectory), "PixelShader.cso"));
-            scene.Device.CreateSampler(ref SamplerDescrption.LinearWrap, samplerHeap.GetCpuHandle(0));
 
+            scene.Device.CreateSampler(ref SamplerDescrption.LinearWrap, samplerHeap.GetCpuHandle(0));
+            
             loader.Begin();
             loader.CreateTexture(textureDataA, textures[0]);
             loader.CreateShaderResourceView(textures[0], textureHeap1.GetCpuHandle(0));
@@ -189,11 +197,12 @@ namespace Fxxk.Net
             loader.CreateShaderResourceView(textures[1], textureHeap2.GetCpuHandle(0));
             loader.End();
 
-            using var obj1 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant, constant2 }, textureHeap1, samplerHeap, PrimitiveTopology.TriangleList);
-            using var obj2 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant, constant2 }, textureHeap2, samplerHeap, PrimitiveTopology.TriangleList);
 
-            obj1.Initialize(scene, vertexShader, pixelShader, ref BlendDescription.Opaque, ref DepthStencilDescription.Default, ref RasteriazerDescription.Default, Format.B8G8R8A8UNorm, Format.D32Float);
-            obj2.Initialize(scene, vertexShader, pixelShader, ref BlendDescription.Opaque, ref DepthStencilDescription.Default, ref RasteriazerDescription.Default, Format.B8G8R8A8UNorm, Format.D32Float);
+            using var obj1 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant }, effect, textureHeap1, samplerHeap, PrimitiveTopology.TriangleList);
+            using var obj2 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant }, effect, textureHeap2, samplerHeap, PrimitiveTopology.TriangleList);
+
+            obj1.Initialize(scene);
+            obj2.Initialize(scene);
 
             scene.SetRenderList(new List<Object3D> { obj1, obj2 });
             using var transform = new XMMatrix();

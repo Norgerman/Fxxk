@@ -10,6 +10,7 @@
 #include <D3DConstant.h>
 #include <D3DAttribute.h>
 #include <D3DIndex.h>
+#include <D3DEffect.h>
 #include <TextureLoader.h>
 
 #define M_PI acosf(-1.0)
@@ -95,7 +96,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 #endif // DEBUG
 
     g_scene->Initialize(hwnd, 0.0f, 0.0f, static_cast<float>(winRect.right - winRect.left), static_cast<float>(winRect.bottom - winRect.top));
-    
+
     D3D12_SAMPLER_DESC samplerState =
     {
         D3D12_FILTER_MIN_MAG_MIP_LINEAR,
@@ -131,9 +132,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     size_t idx = 0;
 
     TextureLoader loader(g_scene->Device(), g_scene->CommandQueue());
-    
+
     loader.Begin();
-    
+
     for (auto& element : textureFiles)
     {
         loader.CreateTexture(element.data(), &texture, false);
@@ -142,9 +143,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         loader.CreateShaderResourceView(texture.Get(), textureHeap2->GetCpuHandle((idx + 1) % 2));
         idx++;
     }
-    
+
     loader.End().Wait();
-    
+
     g_scene->Device()->CreateSampler(&samplerState, samplerHeap->GetCpuHandle(0));
 
     DirectX::VertexPositionNormalTexture vertices[] = {
@@ -154,11 +155,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         { XMFLOAT3({ 0.0f, h, 0.0f }), XMFLOAT3({ 0.0f, 0.0f, 1.0f }), XMFLOAT2({ 0.0f, 0.0f }) },
     };
 
-    vector<InputElement> verticesDesc =
+    vector<InputElement> inputs =
     {
-        { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXMATRIX", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 0},
+        { "TEXMATRIX", 1, DXGI_FORMAT_R32G32B32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 0},
+        { "TEXMATRIX", 2, DXGI_FORMAT_R32G32B32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 0}
     };
 
     D3D12_SHADER_BYTECODE vertexShader = {
@@ -180,13 +184,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 1.0f
     };
-    vector<InputElement> textureMatrixDesc =
-    {
-        { "TEXMATRIX", 0, DXGI_FORMAT_R32G32B32_FLOAT, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 0},
-        { "TEXMATRIX", 1, DXGI_FORMAT_R32G32B32_FLOAT, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 0},
-        { "TEXMATRIX", 2, DXGI_FORMAT_R32G32B32_FLOAT, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 0}
-    };
-
 
     float textureMatrixY[] =
     {
@@ -201,20 +198,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     RenderTargetState renderTargetState(DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_FORMAT_D32_FLOAT);
     vector<shared_ptr<D3DAttribute>> attributes = {
-        make_shared<D3DAttribute>(g_scene.get(), static_cast<uint32_t>(sizeof(VertexPositionNormalTexture)), 4, static_cast <uint32_t>(sizeof(VertexPositionNormalTexture)), verticesDesc),
-        make_shared<D3DAttribute>(g_scene.get(), static_cast<uint32_t>(sizeof(float)), 9, static_cast <uint32_t>(sizeof(float) * 9), textureMatrixDesc)
+        make_shared<D3DAttribute>(g_scene.get(), static_cast<uint32_t>(sizeof(VertexPositionNormalTexture)), 4, static_cast <uint32_t>(sizeof(VertexPositionNormalTexture))),
+        make_shared<D3DAttribute>(g_scene.get(), static_cast<uint32_t>(sizeof(float)), 9, static_cast <uint32_t>(sizeof(float) * 9))
     };
     auto index = make_shared<D3DIndex>(g_scene.get(), 4, 6);
-    vector<shared_ptr<D3DConstant>> constants = {
-         make_shared<D3DConstant>(g_scene.get(), 4, 16),
-         make_shared<D3DConstant>(g_scene.get(), 4, 4)
-    };
+    shared_ptr<D3DConstant> textureMatrixYConstant = make_shared<D3DConstant>(g_scene.get(), 4, 16);
+    shared_ptr<D3DConstant> colorConstant = make_shared<D3DConstant>(g_scene.get(), 4, 4);
+
+    auto effect = make_shared<D3DEffect>(move(inputs), std::vector({ colorConstant.get() }), 1, 2, 1);
 
     attributes[0]->Update(vertices);
     attributes[1]->Update(textureMatrixX);
     index->Update(indices);
-    constants[0]->Update(textureMatrixY);
-    constants[1]->Update(color);
+    textureMatrixYConstant->Update(textureMatrixY);
+    colorConstant->Update(color);
 
     vector<D3DAttribute*> attributePtr;
     vector<D3DConstant*> constantPtr;
@@ -224,15 +221,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         attributePtr.push_back(p.get());
     }
 
-    for (auto& p : constants)
-    {
-        constantPtr.push_back(p.get());
-    }
 
     D3DObject obj1(
         attributePtr,
         index.get(),
-        constantPtr,
+        { textureMatrixYConstant.get() },
+        effect.get(),
         textureHeap.get(),
         samplerHeap.get()
     );
@@ -240,13 +234,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     D3DObject obj2(
         attributePtr,
         index.get(),
-        constantPtr,
+        { textureMatrixYConstant.get() },
+        effect.get(),
         textureHeap2.get(),
         samplerHeap.get()
     );
 
-    obj1.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, Global::defaultRasterizerStateDesc, renderTargetState);
-    obj2.Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, Global::defaultRasterizerStateDesc, renderTargetState);
+    effect->Initialize(*g_scene, vertexShader, pixelShader, CommonStates::Opaque, CommonStates::DepthDefault, Global::defaultRasterizerStateDesc, renderTargetState);
+
+    obj1.Initialize(*g_scene);
+    obj2.Initialize(*g_scene);
 
     g_scene->SetRenderList(std::initializer_list<D3DObject*>{ &obj1, & obj2 });
 
@@ -259,41 +256,41 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     g_scene->SetInactiveTargetUpdateTimeout(true, 1.0 / 30);
 
     g_scene->OnUpdate([&](D3DScene& scene, double time) -> void
-    {
-        scale += step;
-        angle += angleStep;
-        count++;
-
-        if (angle > 360)
         {
-            angle -= 360;
-        }
+            scale += step;
+            angle += angleStep;
+            count++;
 
-        if (scale > 1.0f || scale < 0.1)
-        {
-            step = -step;
-        }
+            if (angle > 360)
+            {
+                angle -= 360;
+            }
+
+            if (scale > 1.0f || scale < 0.1)
+            {
+                step = -step;
+            }
 
 
-        textureMatrixX[0] = scale;
-        textureMatrixY[5] = scale;
+            textureMatrixX[0] = scale;
+            textureMatrixY[5] = scale;
 
-        if (count == 10)
-        {
-            count = 0;
-            color[0] = Randf();
-            color[1] = Randf();
-            color[2] = Randf();
-            color[3] = Randf();
-        }
+            if (count == 10)
+            {
+                count = 0;
+                color[0] = Randf();
+                color[1] = Randf();
+                color[2] = Randf();
+                color[3] = Randf();
+            }
 
-        attributes[1]->Update(textureMatrixX);
-        constants[0]->Update(textureMatrixY);
-        constants[1]->Update(color);
+            attributes[1]->Update(textureMatrixX);
+            textureMatrixYConstant->Update(textureMatrixY);
+            colorConstant->Update(color);
 
-        obj1.UpdateTransform(Transform(g_scene->Viewport(), angle, scale, w, h));
-        obj2.UpdateTransform(Transform(g_scene->Viewport(), angle * 2, scale, w, h));
-    });
+            obj1.UpdateTransform(Transform(g_scene->Viewport(), angle, scale, w, h));
+            obj2.UpdateTransform(Transform(g_scene->Viewport(), angle * 2, scale, w, h));
+        });
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT1));
 

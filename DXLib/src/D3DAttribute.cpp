@@ -2,22 +2,21 @@
 #include <D3DScene.h>
 
 namespace DX {
-    void D3DAttribute::AppendElement(uint32_t solt, std::vector<D3D12_INPUT_ELEMENT_DESC>& output) const
+
+    D3DAttribute::D3DAttribute(
+        D3DScene* scene,
+        uint32_t elementSize,
+        uint32_t size,
+        uint32_t stride
+    ) :
+        D3DData(scene, elementSize, size),
+        m_stride(stride),
+        m_view()
     {
-        for (auto& element : m_elements)
-        {
-            output.push_back(
-                {
-                    element.SemanticName.data(),
-                    element.SemanticIndex,
-                    element.Format,
-                    solt,
-                    element.AlignedByteOffset,
-                    element.InputSlotClass,
-                    element.InstanceDataStepRate
-                });
-        }
+        m_view.SizeInBytes = ByteSize();
+        m_view.StrideInBytes = m_stride;
     }
+
 
     void D3DAttribute::Alloc()
     {

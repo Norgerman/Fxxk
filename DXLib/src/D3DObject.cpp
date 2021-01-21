@@ -4,6 +4,7 @@
 #include <wil/result.h>
 #include <D3DScene.h>
 #include <D3DObject.h>
+#include <D3DEffect.h>
 #include "d3dx12.h"
 
 
@@ -18,12 +19,14 @@ namespace DX {
             vector<D3DAttribute*>&& attributes,
             D3DIndex* indices,
             vector<D3DConstant*>&& constants,
+            D3DEffect* effect,
             D3DDescriptorHeap* textureHeap,
             D3DDescriptorHeap* samplerHeap,
             D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
             m_attributes(move(attributes)),
             m_indices(indices),
             m_constants(move(constants)),
+            m_effect(effect),
             m_textureHeap(textureHeap),
             m_samplerHeap(samplerHeap),
             m_primitiveTopology(primitiveTopology),
@@ -35,12 +38,14 @@ namespace DX {
             const vector<D3DAttribute*>& attributes,
             D3DIndex* indices,
             const vector<D3DConstant*>& constants,
+            D3DEffect* effect,
             D3DDescriptorHeap* textureHeap,
             D3DDescriptorHeap* samplerHeap,
             D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
             m_attributes(attributes),
             m_indices(indices),
             m_constants(constants),
+            m_effect(effect),
             m_textureHeap(textureHeap),
             m_samplerHeap(samplerHeap),
             m_primitiveTopology(primitiveTopology),
@@ -48,83 +53,8 @@ namespace DX {
         {
         }
 
-        void Initialize(
-            D3DScene& scene,
-            D3D12_SHADER_BYTECODE& vertexShader,
-            D3D12_SHADER_BYTECODE& pixelShader,
-            const D3D12_BLEND_DESC& blend,
-            const D3D12_DEPTH_STENCIL_DESC& depthStencil,
-            const D3D12_RASTERIZER_DESC& rasterizer,
-            const RenderTargetState& renderTarget,
-            D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology,
-            D3D12_INDEX_BUFFER_STRIP_CUT_VALUE stripCutValue)
+        void Initialize(D3DScene& scene)
         {
-            vector<D3D12_INPUT_ELEMENT_DESC> elements;
-            uint32_t idx = 0;
-            for (auto& attribute : m_attributes)
-            {
-                attribute->AppendElement(idx, elements);
-                idx++;
-            }
-            D3D12_INPUT_LAYOUT_DESC layoutDesc = {
-                elements.data(),
-                static_cast<uint32_t>(elements.size())
-            };
-
-            EffectPipelineStateDescription pd = {
-                &layoutDesc,
-                blend,
-                depthStencil,
-                rasterizer,
-                renderTarget,
-                primitiveTopology,
-                stripCutValue
-            };
-
-            D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-                D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-                D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-                D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-                D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-            vector<CD3DX12_ROOT_PARAMETER> rootParameters(m_constants.size() + m_textureHeap->Count() + m_samplerHeap->Count() + 2);
-            vector<CD3DX12_DESCRIPTOR_RANGE> textureRange(m_textureHeap->Count());
-            vector<CD3DX12_DESCRIPTOR_RANGE> samplerRange(m_samplerHeap->Count());
-            CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-
-            rootParameters[0].InitAsConstantBufferView(0);
-            rootParameters[1].InitAsConstantBufferView(1);
-            idx = 2;
-
-            // constants
-            auto count = m_constants.size();
-            for (size_t i = 0; i < count; i++, idx++)
-            {
-                rootParameters[idx].InitAsConstantBufferView(static_cast<uint32_t>(i + 2));
-            }
-
-            // textures
-            count = m_textureHeap->Count();
-            for (size_t i = 0; i < count; i++, idx++)
-            {
-                textureRange[i] = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, static_cast<uint32_t>(i));
-                rootParameters[idx].InitAsDescriptorTable(1, &textureRange[i], D3D12_SHADER_VISIBILITY_PIXEL);
-            }
-
-            // samplers
-            count = m_samplerHeap->Count();
-            for (size_t i = 0; i < count; i++, idx++)
-            {
-                samplerRange[i] = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, static_cast<uint32_t>(i));
-                rootParameters[idx].InitAsDescriptorTable(1, &samplerRange[i], D3D12_SHADER_VISIBILITY_PIXEL);
-            }
-
-            rootSignatureDesc.Init(static_cast<uint32_t>(rootParameters.size()), rootParameters.data(), 0, nullptr, rootSignatureFlags);
-            auto hr = CreateRootSignature(scene.Device(), &rootSignatureDesc, &m_rootSignature);
-
-            THROW_IF_FAILED(hr);
-
-            pd.CreatePipelineState(scene.Device(), m_rootSignature.Get(), vertexShader, pixelShader, &m_pipelineState);
-
             m_transformBuffer = make_unique<D3DConstant>(&scene, 4, 16);
             m_transformBuffer->Update(&m_transform);
         }
@@ -153,21 +83,22 @@ namespace DX {
         void Render(D3DScene& scene)
         {
             auto commandList = scene.CommandList();
-            uint32_t idx = 2;
+            uint32_t idx = static_cast<uint32_t>(m_effect->ObjectConstantStartSolt());
             ID3D12DescriptorHeap* heaps[] = { m_textureHeap->Heap(), m_samplerHeap->Heap() };
 
-            commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-            commandList->SetPipelineState(m_pipelineState.Get());
-            commandList->SetDescriptorHeaps(2, heaps);
+            m_effect->Apply(scene);
 
             // constants
-            commandList->SetGraphicsRootConstantBufferView(0, scene.Projection().GpuAddress());
-            commandList->SetGraphicsRootConstantBufferView(1, m_transformBuffer->GpuAddress());
+            commandList->SetGraphicsRootConstantBufferView(idx, m_transformBuffer->GpuAddress());
+            idx++;
             for (auto& constant : m_constants)
             {
                 commandList->SetGraphicsRootConstantBufferView(idx, constant->GpuAddress());
                 idx++;
             }
+
+            // heaps
+            commandList->SetDescriptorHeaps(2, heaps);
 
             // textures
             auto count = m_textureHeap->Count();
@@ -183,8 +114,8 @@ namespace DX {
                 commandList->SetGraphicsRootDescriptorTable(idx, m_samplerHeap->GetGpuHandle(i));
             }
 
+            // vertex
             commandList->IASetIndexBuffer(&m_indices->BufferView());
-
             vector<D3D12_VERTEX_BUFFER_VIEW> vertexView;
             for (auto& attribute : m_attributes)
             {
@@ -207,15 +138,13 @@ namespace DX {
             }
             m_indices->Reset();
             m_transformBuffer->Reset();
-            m_pipelineState.Reset();
-            m_rootSignature.Reset();
+            m_effect->Reset();
         }
 
     private:
-        ComPtr<ID3D12PipelineState> m_pipelineState;
-        ComPtr<ID3D12RootSignature> m_rootSignature;
         vector<D3DAttribute*> m_attributes;
         vector<D3DConstant*> m_constants;
+        D3DEffect* m_effect;
         D3DDescriptorHeap* m_textureHeap;
         D3DDescriptorHeap* m_samplerHeap;
         unique_ptr<D3DConstant> m_transformBuffer;
@@ -228,10 +157,11 @@ namespace DX {
         vector<D3DAttribute*>&& attributes,
         D3DIndex* indices,
         std::vector<D3DConstant*>&& constants,
+        D3DEffect* effect,
         D3DDescriptorHeap* textureHeap,
         D3DDescriptorHeap* samplerHeap,
         D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
-        m_impl(make_unique<Impl>(move(attributes), indices, move(constants), textureHeap, samplerHeap, primitiveTopology))
+        m_impl(make_unique<Impl>(move(attributes), indices, move(constants), effect, textureHeap, samplerHeap, primitiveTopology))
 
     {
 
@@ -241,26 +171,18 @@ namespace DX {
         const vector<D3DAttribute*>& attributes,
         D3DIndex* indices,
         const std::vector<D3DConstant*>& constants,
+        D3DEffect* effect,
         D3DDescriptorHeap* textureHeap,
         D3DDescriptorHeap* samplerHeap,
         D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) : 
-        m_impl(make_unique<Impl>(attributes, indices, constants, textureHeap, samplerHeap, primitiveTopology))
+        m_impl(make_unique<Impl>(attributes, indices, constants, effect, textureHeap, samplerHeap, primitiveTopology))
     {
 
     }
 
-    void D3DObject::Initialize(
-        D3DScene& scene,
-        D3D12_SHADER_BYTECODE& vertexShader,
-        D3D12_SHADER_BYTECODE& pixelShader,
-        const D3D12_BLEND_DESC& blend,
-        const D3D12_DEPTH_STENCIL_DESC& depthStencil,
-        const D3D12_RASTERIZER_DESC& rasterizer,
-        const RenderTargetState& renderTarget,
-        D3D12_PRIMITIVE_TOPOLOGY_TYPE primitiveTopology,
-        D3D12_INDEX_BUFFER_STRIP_CUT_VALUE stripCutValue)
+    void D3DObject::Initialize(D3DScene& scene)
     {
-        m_impl->Initialize(scene, vertexShader, pixelShader, blend, depthStencil, rasterizer, renderTarget, primitiveTopology, stripCutValue);
+        m_impl->Initialize(scene);
     }
 
     void D3DObject::UpdateTransform(const XMMATRIX& transform)

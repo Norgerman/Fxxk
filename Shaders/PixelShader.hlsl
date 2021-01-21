@@ -9,7 +9,7 @@ struct PS_IN {
 	float2 tex: TEXCOORD;
 };
 
-cbuffer PS_COLOR : register(b3) {
+cbuffer PS_COLOR : register(b1) {
 	float4 color;
 };
 

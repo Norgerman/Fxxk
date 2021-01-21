@@ -9,17 +9,14 @@ namespace DX
     {
         using namespace std;
         using namespace System;
-        using namespace System::Buffers;
         using namespace System::Collections::Generic;
-        using namespace DirectX;
         using namespace DX::Sharp::Direct3D;
-        using namespace DX::Sharp::Direct3D12;
-        using namespace DX::Sharp::DXGI;
 
         Object3D::Object3D(
             IEnumerable<Attribute^>^ attributes,
             Index^ index,
             IEnumerable<Constant^>^ constants,
+            Effect3D^ effect,
             DescriptorHeap^ textureHeap,
             DescriptorHeap^ samplerHeap,
             PrimitiveTopology primitiveTopology
@@ -27,6 +24,7 @@ namespace DX
             m_attributes(attributes),
             m_index(index),
             m_constants(constants),
+            m_effect(effect),
             m_textureHeap(textureHeap),
             m_samplerHeap(samplerHeap)
         {
@@ -43,61 +41,12 @@ namespace DX
                 constantPtr.push_back(constant->Value);
             }
 
-            m_value = new D3DObject(move(attributePtr), m_index->Value, move(constantPtr), m_textureHeap->Value, m_samplerHeap->Value, static_cast<D3D12_PRIMITIVE_TOPOLOGY>(primitiveTopology));
+            m_value = new D3DObject(move(attributePtr), m_index->Value, move(constantPtr), m_effect->Value, m_textureHeap->Value, m_samplerHeap->Value, static_cast<D3D12_PRIMITIVE_TOPOLOGY>(primitiveTopology));
         }
 
-        void Object3D::Initialize(
-            Scene3D^ scene,
-            Memory<Byte> vertexShader,
-            Memory<Byte> pixelShader,
-            BlendDescription% blend,
-            DepthStencilDescription% depthStencil,
-            RasteriazerDescription% rasterizer,
-            Format rtFormat,
-            Format dsFormat,
-            PrimitiveTopologyType primitiveTopology,
-            IndexBufferStripCutValue stripCutValue)
+        void Object3D::Initialize(Scene3D^ scene)
         {
-            auto renderTarget = RenderTargetState(static_cast<DXGI_FORMAT>(rtFormat), static_cast<DXGI_FORMAT>(dsFormat));
-            pin_ptr<BlendDescription> blendPtr = &blend;
-            pin_ptr<DepthStencilDescription> depthPtr = &depthStencil;
-            pin_ptr<RasteriazerDescription> rasterizerPtr = &rasterizer;
-            MemoryHandle^ vertexShaderData = vertexShader.Pin();
-            MemoryHandle^ pixelShaderData = pixelShader.Pin();
-            D3D12_SHADER_BYTECODE vertex = { vertexShaderData->Pointer, static_cast<unsigned int>(vertexShader.Length) };
-            D3D12_SHADER_BYTECODE pixel = { pixelShaderData->Pointer,  static_cast<unsigned int>(pixelShader.Length) };
-
-            try {
-                m_value->Initialize(
-                    *(scene->Value),
-                    vertex, pixel,
-                    *reinterpret_cast<D3D12_BLEND_DESC*>(blendPtr),
-                    *reinterpret_cast<D3D12_DEPTH_STENCIL_DESC*>(depthPtr),
-                    *reinterpret_cast<D3D12_RASTERIZER_DESC*>(rasterizerPtr),
-                    renderTarget,
-                    static_cast<D3D12_PRIMITIVE_TOPOLOGY_TYPE>(primitiveTopology),
-                    static_cast<D3D12_INDEX_BUFFER_STRIP_CUT_VALUE>(stripCutValue)
-                );
-            }
-            finally
-            {
-                delete vertexShaderData;
-                delete pixelShaderData;
-            }
-        }
-
-        void Object3D::Initialize(
-            Scene3D^ scene,
-            Memory<Byte> vertexShader,
-            Memory<Byte> pixelShader,
-            BlendDescription% blend,
-            DepthStencilDescription% depthStencil,
-            RasteriazerDescription% rasterizer,
-            Format rtFormat,
-            Format dsFormat
-        )
-        {
-            Initialize(scene, vertexShader, pixelShader, blend, depthStencil, rasterizer, rtFormat, dsFormat, PrimitiveTopologyType::Triangle, IndexBufferStripCutValue::Disabled);
+            m_value->Initialize(*(scene->Value));
         }
 
         void Object3D::UpdateTransform(DX::Sharp::SimpleMath::XMMatrix^ transform)
