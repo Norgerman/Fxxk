@@ -187,7 +187,7 @@ namespace Fxxk.Net
             loader.CreateTexture(textureDataB, textures[1]);
             loader.CreateShaderResourceView(textures[1], textureHeap1.GetCpuHandle(1));
             loader.CreateShaderResourceView(textures[1], textureHeap2.GetCpuHandle(0));
-            loader.EndAsync().Wait();
+            loader.End();
 
             using var obj1 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant, constant2 }, textureHeap1, samplerHeap, PrimitiveTopology.TriangleList);
             using var obj2 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant, constant2 }, textureHeap2, samplerHeap, PrimitiveTopology.TriangleList);
@@ -232,7 +232,8 @@ namespace Fxxk.Net
                 scene.OnDeactivated();
             };
 
-           uint count = 0;
+
+            uint count = 0;
             float scale = 1;
             float step = 0.01f;
             float angle = 0;
