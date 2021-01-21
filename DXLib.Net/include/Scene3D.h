@@ -11,7 +11,7 @@ namespace DX
         ref class Object3D;
 
         public delegate void SceneProjectionCallback(Scene3D^ scene);
-        public delegate void SceneUpdateCallback(Scene3D^ scene, double elapsedSeconds);
+        public delegate void SceneUpdateCallback(Scene3D^ scene, double elapsedSeconds, System::UInt32 frame);
 
         public ref class Scene3D
         {
@@ -70,6 +70,14 @@ namespace DX
                 }
             }
 
+            property System::UInt32 Fps
+            {
+                System::UInt32 get()
+                {
+                    return m_value->FramesPerSecond();
+                }
+            }
+
             Scene3D();
             Scene3D(Color bg, DX::Sharp::Direct3D::FeatureLevel featureLevel);
 
@@ -93,10 +101,10 @@ namespace DX
             !Scene3D();
         private:
             delegate void NativeProjCallback(DX::D3DScene&);
-            delegate void NativeUpdateCallback(DX::D3DScene&, double);
+            delegate void NativeUpdateCallback(DX::D3DScene&, double, uint32_t);
 
             void Project(DX::D3DScene& scene);
-            void Update(DX::D3DScene& scene, double second);
+            void Update(DX::D3DScene& scene, double second, System::UInt32 frame);
 
             DX::D3DScene* m_value;
             SceneProjectionCallback^ m_reproject;

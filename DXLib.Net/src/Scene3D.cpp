@@ -13,7 +13,7 @@ namespace DX
         using namespace DX::Sharp::SimpleMath;
 
         typedef void(__stdcall* native_proj_callback)(D3DScene&);
-        typedef void(__stdcall* native_upd_callback)(D3DScene&, double);
+        typedef void(__stdcall* native_upd_callback)(D3DScene&, double, uint32_t);
 
         void BaseProject(Scene3D^ scene)
         {
@@ -114,9 +114,9 @@ namespace DX
             m_reproject(this);
         }
 
-        void Scene3D::Update(DX::D3DScene& scene, double second)
+        void Scene3D::Update(DX::D3DScene& scene, double second, UInt32 frame)
         {
-            OnUpdate(this, second);
+            OnUpdate(this, second, frame);
         }
 
         Scene3D::~Scene3D()

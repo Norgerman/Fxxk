@@ -57,8 +57,9 @@ namespace DX {
         ID3D12GraphicsCommandList* CommandList() const;
         const D3D12_VIEWPORT& Viewport() const;
         const D3DConstant& Projection() const;
-        void OnUpdate(const std::function<void(D3DScene&, double)>& update);
-        void OnUpdate(std::function<void(D3DScene&, double)>&& update);
+        uint32_t FramesPerSecond() const;
+        void OnUpdate(const std::function<void(D3DScene&, double, uint32_t)>& update);
+        void OnUpdate(std::function<void(D3DScene&, double, uint32_t)>&& update);
         void SetRenderList(const std::vector<D3DObject*>& objects);
         void SetRenderList(std::vector<D3DObject*>&& objects);
         void UpdateProjection(const DirectX::XMMATRIX& projection);

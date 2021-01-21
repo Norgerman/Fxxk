@@ -244,12 +244,15 @@ namespace Fxxk.Net
             float angleStep = 1;
             var random = new Random();
 
-            scene.OnUpdate += (scene, second) =>
+            scene.OnUpdate += (scene, second, frame) =>
             {
 
-                scale += step;
-                angle += angleStep;
-                count++;
+                if (frame > 1)
+                {
+                    scale += step;
+                    angle += angleStep;
+                    count++;
+                }
 
                 if (angle > 360)
                 {
@@ -260,7 +263,6 @@ namespace Fxxk.Net
                 {
                     step = -step;
                 }
-
 
                 textureMatrixX[0] = scale;
                 textureMatrixY[5] = scale;

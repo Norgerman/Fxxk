@@ -112,7 +112,8 @@ namespace DX
 
             uint32_t lastFrameCount = m_frameCount;
 
-            if (m_isFixedTimeStep)
+            // render first frame
+            if (m_frameCount && m_isFixedTimeStep)
             {
                 // Fixed timestep update logic
 

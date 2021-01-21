@@ -32,7 +32,7 @@ namespace DX {
             m_projection(DirectX::XMMatrixIdentity()),
             m_suspended(false),
             m_objects(),
-            m_update([](D3DScene&, double) -> void {}),
+            m_update([](D3DScene&, double, uint32_t) -> void {}),
             m_debug(false),
             m_inactive(false),
             m_fixedTimeStep(false),
@@ -55,7 +55,7 @@ namespace DX {
             m_projection(DirectX::XMMatrixIdentity()),
             m_suspended(false),
             m_objects(),
-            m_update([](D3DScene&, double) -> void {}),
+            m_update([](D3DScene&, double, uint32_t) -> void {}),
             m_debug(false),
             m_inactive(false),
             m_fixedTimeStep(false),
@@ -91,9 +91,8 @@ namespace DX {
             m_timer.Tick([&]()
                 {
                     Update(m_timer);
+                    Render();
                 });
-
-            Render();
         }
 
         void SetTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds)
@@ -155,12 +154,12 @@ namespace DX {
             CreateResources();
         }
 
-        void OnUpdate(const function<void(D3DScene&, double)>& update)
+        void OnUpdate(const function<void(D3DScene&, double, uint32_t)>& update)
         {
             m_update = update;
         }
 
-        void OnUpdate(function<void(D3DScene&, double)>&& update)
+        void OnUpdate(function<void(D3DScene&, double, uint32_t)>&& update)
         {
             m_update = move(update);
         }
@@ -217,6 +216,11 @@ namespace DX {
             m_debug = true;
         }
 
+        uint32_t FramesPerSecond() const
+        {
+            return m_timer.GetFramesPerSecond();
+        }
+
         void* operator new(size_t i)
         {
             return _mm_malloc(i, 16);
@@ -234,17 +238,11 @@ namespace DX {
     private:
         void Update(StepTimer const& timer)
         {
-            m_update(*this->m_owner, timer.GetElapsedSeconds());
+            m_update(*this->m_owner, timer.GetElapsedSeconds(), timer.GetFrameCount());
         }
 
         void Render()
         {
-            // Don't try to render anything before the first Update.
-            if (m_timer.GetFrameCount() == 0)
-            {
-                return;
-            }
-
             // Prepare the command list to render a new frame.
             Clear();
 
@@ -682,7 +680,7 @@ namespace DX {
         unique_ptr<DirectX::GraphicsMemory> m_memory;
 
         function<void(D3DScene&)> m_rebuildProjection;
-        function<void(D3DScene&, double)> m_update;
+        function<void(D3DScene&, double, uint32_t)> m_update;
         array<float, 4> m_backgroundColor;
 
         StepTimer m_timer;
@@ -783,12 +781,12 @@ namespace DX {
         m_impl->UpdateProjection(move(projection));
     }
 
-    void D3DScene::OnUpdate(const function<void(D3DScene&, double)>& update)
+    void D3DScene::OnUpdate(const function<void(D3DScene&, double, uint32_t)>& update)
     {
         m_impl->OnUpdate(update);
     }
 
-    void D3DScene::OnUpdate(function<void(D3DScene&, double)>&& update)
+    void D3DScene::OnUpdate(function<void(D3DScene&, double, uint32_t)>&& update)
     {
         m_impl->OnUpdate(move(update));
     }
@@ -796,6 +794,11 @@ namespace DX {
     void D3DScene::EnableDebug()
     {
         m_impl->EnableDebug();
+    }
+
+    uint32_t D3DScene::FramesPerSecond() const
+    {
+        return m_impl->FramesPerSecond();
     }
 
     ID3D12Device* D3DScene::Device() const

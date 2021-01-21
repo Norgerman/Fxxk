@@ -255,11 +255,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     g_scene->SetInactiveTargetUpdateTimeout(true, 1.0 / 30);
 
-    g_scene->OnUpdate([&](D3DScene& scene, double time) -> void
+    g_scene->OnUpdate([&](D3DScene& scene, double time, uint32_t frame) -> void
         {
-            scale += step;
-            angle += angleStep;
-            count++;
+            if (frame > 1)
+            {
+                scale += step;
+                angle += angleStep;
+                count++;
+            }
 
             if (angle > 360)
             {
