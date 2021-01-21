@@ -383,7 +383,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND& hwnd)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static bool s_in_sizemove = false;
     static bool s_in_suspend = false;
     static bool s_minimized = false;
     static bool s_fullscreen = false;
@@ -411,7 +410,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     break;
     case WM_PAINT:
     {
-        if (s_in_sizemove && scene)
+        if (scene)
         {
             scene->Tick();
         }
@@ -442,26 +441,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 scene->OnResuming();
             s_in_suspend = false;
         }
-        else if (!s_in_sizemove && scene)
+        else if (scene)
         {
             scene->OnWindowSizeChanged(0.0f, 0.0f, static_cast<float>(LOWORD(lParam)), static_cast<float>(HIWORD(lParam)));
         }
     }
     break;
-    case WM_ENTERSIZEMOVE:
-        s_in_sizemove = true;
-        break;
-
-    case WM_EXITSIZEMOVE:
-        s_in_sizemove = false;
-        if (scene)
-        {
-            RECT rc;
-            GetClientRect(hWnd, &rc);
-
-            scene->OnWindowSizeChanged(0.0f, 0.0f, static_cast<float>(rc.right - rc.left), static_cast<float>(rc.bottom - rc.top));
-        }
-        break;
     case WM_ACTIVATEAPP:
         if (scene)
         {

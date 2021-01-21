@@ -187,7 +187,7 @@ namespace Fxxk.Net
 
 
             scene.Device.CreateSampler(ref SamplerDescrption.LinearWrap, samplerHeap.GetCpuHandle(0));
-            
+
             loader.Begin();
             loader.CreateTexture(textureDataA, textures[0]);
             loader.CreateShaderResourceView(textures[0], textureHeap1.GetCpuHandle(0));
@@ -212,11 +212,6 @@ namespace Fxxk.Net
 
             form.Show();
 
-            form.ResizeEnd += (sender, e) =>
-            {
-                scene.OnWindowSizeChanged(0.0f, 0.0f, form.Size.Width, form.Size.Height);
-            };
-
             form.Resize += (sender, e) =>
             {
                 if (form.WindowState == FormWindowState.Minimized)
@@ -229,6 +224,9 @@ namespace Fxxk.Net
                     scene.OnResuming();
                     minimized = false;
                 }
+
+                scene.OnWindowSizeChanged(0.0f, 0.0f, form.Size.Width, form.Size.Height);
+                scene.Tick();
             };
 
             form.Activated += (sender, e) =>
