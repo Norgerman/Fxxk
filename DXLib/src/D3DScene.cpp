@@ -16,7 +16,7 @@ namespace DX {
     using Microsoft::WRL::ComPtr;
     using Microsoft::WRL::Wrappers::Event;
 
-    class D3DScene::Impl
+    __declspec(align(16)) class D3DScene::Impl
     {
     public:
         Impl(D3DScene* owner, array<float, 4>&& backgroundColor, function<void(D3DScene&)>&& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
@@ -215,6 +215,16 @@ namespace DX {
         void EnableDebug()
         {
             m_debug = true;
+        }
+
+        void* operator new(size_t i)
+        {
+            return _mm_malloc(i, 16);
+        }
+
+        void operator delete(void* p)
+        {
+            _mm_free(p);
         }
 
         ~Impl()

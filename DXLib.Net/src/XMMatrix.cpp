@@ -10,12 +10,8 @@ namespace DX
         {
             XMMatrix::XMMatrix()
             {
-                m_value = new DirectX::XMMATRIX(
-                    1.0f, 0.0f, 0.0f, 0.0f,
-                    0.0f, 1.0f, 0.0f, 0.0f,
-                    0.0f, 0.0f, 1.0f, 0.0f,
-                    0.0f, 0.0f, 0.0f, 1.0f
-                );
+                m_value = static_cast<DirectX::XMMATRIX*>(_mm_malloc(sizeof(DirectX::XMMATRIX), 16));
+                Identity();
             }
 
             void XMMatrix::Set(
@@ -45,16 +41,22 @@ namespace DX
 
             void XMMatrix::Scaling(float x, float y, float z)
             {
-                m_value->r[0].m128_f32[0] = x;
-                m_value->r[1].m128_f32[1] = y;
-                m_value->r[2].m128_f32[2] = z;
+                Set(
+                    x, 0.0f, 0.0f, 0.0f,
+                    0.0f, y, 0.0f, 0.0f,
+                    0.0f, 0.0f, z, 0.0f,
+                    0.0f, 0.0f, 0.0f, 1.0f
+                );
             }
 
             void XMMatrix::Translation(float x, float y, float z)
             {
-                m_value->r[3].m128_f32[0] = x;
-                m_value->r[3].m128_f32[1] = y;
-                m_value->r[3].m128_f32[2] = z;
+                Set(
+                    1.0f, 0.0f, 0.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f, 0.0f,
+                    0.0f, 0.0f, 1.0f, 0.0f,
+                    x, y, z, 1.0f
+                );
             }
 
             void XMMatrix::Identity()
@@ -105,8 +107,11 @@ namespace DX
 
             XMMatrix::!XMMatrix()
             {
-                delete m_value;
-                m_value = nullptr;
+                if (m_value)
+                {
+                    _mm_free(m_value);
+                    m_value = nullptr;
+                }
             }
 
             XMMatrix::~XMMatrix()

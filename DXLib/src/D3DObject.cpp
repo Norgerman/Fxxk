@@ -13,7 +13,7 @@ namespace DX {
     using namespace std;
     using namespace Microsoft::WRL;
 
-    class D3DObject::Impl {
+    __declspec(align(16)) class D3DObject::Impl {
     public:
         Impl(
             vector<D3DAttribute*>&& attributes,
@@ -141,6 +141,15 @@ namespace DX {
             m_effect->Reset();
         }
 
+        void* operator new(size_t i)
+        {
+            return _mm_malloc(i, 16);
+        }
+
+        void operator delete(void* p)
+        {
+            _mm_free(p);
+        }
     private:
         vector<D3DAttribute*> m_attributes;
         vector<D3DConstant*> m_constants;
