@@ -5,19 +5,12 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Platforms>x64;x86</Platforms>
   </PropertyGroup>
 
   <Target Name="CopyLibs" AfterTargets="Build">
-    <Copy
-      SourceFiles="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\DxLib.dll;$(SolutionDir)$(PlatformName)\$(ConfigurationName)\DxLib.pdb"
-      DestinationFolder="$(OutDir)"
-     />
+    <Copy SourceFiles="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\DxLib.dll;$(SolutionDir)$(PlatformName)\$(ConfigurationName)\DxLib.pdb" DestinationFolder="$(OutDir)" />
   </Target>
-
-  <PropertyGroup>
-    <WindowsKitVersion>10.0.19041.0</WindowsKitVersion>
-  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DXLib.Net\DXLib.Net.vcxproj" />

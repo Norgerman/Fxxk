@@ -1,6 +1,18 @@
 ﻿<Project>
   <PropertyGroup>
-    <WindowsKitRootVersion Condition="$(WindowsKitRootVersion)==''">10</WindowsKitRootVersion>
+    <WindowsSdkDir_10 Condition="'$(WindowsSdkDir_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0@InstallationFolder)</WindowsSdkDir_10>
+    <WindowsSdkDir_10 Condition="'$(WindowsSdkDir_10)' == ''">$(Registry:HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0@InstallationFolder)</WindowsSdkDir_10>
+    <!-- Set the WindowsSdkDir to windows 10 path -->
+    <WindowsSdkDir Condition="'$(UseEnv)' != 'true'">$(WindowsSdkDir_10)</WindowsSdkDir>
+    <SDKIdentifier Condition="'$(SDKIdentifier)' == ''">Windows</SDKIdentifier>
+    <SDKVersion Condition="'$(SDKVersion)' == ''">10.0</SDKVersion>
+    <SDKDisplayName Condition="'$(SDKDisplayName)' == ''">Windows 10</SDKDisplayName>
+    <_LatestWindowsTargetPlatformVersion>$([Microsoft.Build.Utilities.ToolLocationHelper]::GetLatestSDKTargetPlatformVersion($(SDKIdentifier), $(SDKVersion)))</_LatestWindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion Condition="'$(WindowsTargetPlatformVersion)' == '' and '$(_LatestWindowsTargetPlatformVersion)' != ''">10.0</WindowsTargetPlatformVersion>
+    <WindowsSDKVersion Condition="'$(WindowsTargetPlatformVersion)' == '10.0'">$(_LatestWindowsTargetPlatformVersion)</WindowsSDKVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <ShaderModel Condition="$(ShaderModel)==''">5_1</ShaderModel>
     <ShaderAsmExtension Condition="$(ShaderAsmExtension)==''">asm</ShaderAsmExtension>
     <ShaderBinExtension Condition="$(ShaderBinExtension)==''">cso</ShaderBinExtension>
@@ -8,16 +20,14 @@
     <FxcArgs Condition="'$(Configuration)'!='Debug'">$(FxcArgs) /O3</FxcArgs>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <WindowsKitsRoot Condition="$(WindowsKitsRoot)==''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot$(WindowsKitRootVersion)', null, RegistryView.Registry32, RegistryView.Default))</WindowsKitsRoot>
-    <FxcPath>"$(WindowsKitsRoot)bin\$(WindowsKitVersion)\x64\fxc.exe"</FxcPath>
-  </PropertyGroup>
-
   <Target Name="CompileShaders" AfterTargets="Build"
 					Inputs="@(CompileShader);%(CompileShader.Dependancies);%(CompileShader.SaveAsm);%(CompileShader.SaveDir)"
 					Outputs="@(CompileShader -> '%(SaveDir)\%(filename).$(ShaderBinExtension)');@(CompileShader -> '%(SaveDir)\%(filename).$(ShaderAsmExtension)')" >
+    <PropertyGroup>
+      <FxcPath>"$(WindowsSdkDir)bin\$(WindowsSDKVersion)\$(PlatformName)\fxc.exe"</FxcPath>
+    </PropertyGroup>
 
-    <MakeDir Condition="!Exists('%(CompileShader.SaveDir)')" Directories="%(CompileShader.SaveDir)" />    
+    <MakeDir Condition="!Exists('%(CompileShader.SaveDir)')" Directories="%(CompileShader.SaveDir)" />
 
     <Exec WorkingDirectory="$(ProjectDir)" Condition="%(SaveAsm) == 'True'"
 					Command="$(FxcPath) $(FxcArgs) &quot;%(fullpath)&quot; /T %(Shader)_$(ShaderModel) /E %(Entry) /Fo &quot;%(SaveDir)\%(filename).$(ShaderBinExtension)&quot; %(CompileShader.Arguments) /Fc &quot;%(SaveDir)\%(filename).$(ShaderAsmExtension)&quot;" />
