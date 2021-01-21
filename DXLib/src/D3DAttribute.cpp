@@ -6,9 +6,16 @@ namespace DX {
     {
         for (auto& element : m_elements)
         {
-            D3D12_INPUT_ELEMENT_DESC desc = element;
-            desc.InputSlot = solt;
-            output.push_back(desc);
+            output.push_back(
+                {
+                    element.SemanticName.data(),
+                    element.SemanticIndex,
+                    element.Format,
+                    solt,
+                    element.AlignedByteOffset,
+                    element.InputSlotClass,
+                    element.InstanceDataStepRate
+                });
         }
     }
 

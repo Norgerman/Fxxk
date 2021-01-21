@@ -40,7 +40,10 @@ namespace DX {
         D3DScene& operator= (D3DScene const&) = delete;
 
         // Initialization and management
-        void Initialize(HWND window, float x, float y, float width, float height, bool fixedTimerStep = false, float targetSeconds = 1.0f / 60);
+        void Initialize(HWND window, float x, float y, float width, float height);
+
+        void SetTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds);
+        void SetInactiveTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds);
 
         void Tick();
         // Messages
@@ -60,6 +63,7 @@ namespace DX {
         void SetRenderList(std::vector<D3DObject*>&& objects);
         void UpdateProjection(const DirectX::XMMATRIX& projection);
         void UpdateProjection(DirectX::XMMATRIX&& projection);
+        void EnableDebug();
     private:
         class Impl;
         std::unique_ptr<Impl> m_impl;

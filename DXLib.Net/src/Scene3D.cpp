@@ -44,14 +44,19 @@ namespace DX
             m_value->OnUpdate(updPtr);
         }
 
-        void Scene3D::Initialize(IntPtr window, float x, float y, float width, float height, bool fixedTimerStep, float targetSeconds)
-        {
-            m_value->Initialize(static_cast<HWND>(window.ToPointer()), x, y, width, height, fixedTimerStep, targetSeconds);
-        }
-
         void Scene3D::Initialize(IntPtr window, float x, float y, float width, float height)
         {
-            Initialize(window, x, y, width, height, false, 1.0f / 60);
+            m_value->Initialize(static_cast<HWND>(window.ToPointer()), x, y, width, height);
+        }
+
+        void Scene3D::SetTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds)
+        {
+            m_value->SetTargetUpdateTimeout(fixedTimeStep, targetSeconds);
+        }
+
+        void Scene3D::SetInactiveTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds)
+        {
+            m_value->SetInactiveTargetUpdateTimeout(fixedTimeStep, targetSeconds);
         }
 
         void Scene3D::Tick()
@@ -97,6 +102,11 @@ namespace DX
         void Scene3D::UpdateProjection(XMMatrix^ projection)
         {
             m_value->UpdateProjection(*projection->Value);
+        }
+
+        void Scene3D::EnableDebug()
+        {
+            m_value->EnableDebug();
         }
 
         void Scene3D::Project(DX::D3DScene& scene)

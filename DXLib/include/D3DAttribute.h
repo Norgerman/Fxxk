@@ -6,6 +6,16 @@
 #include <export.h>
 
 namespace DX {
+    struct dllexport InputElement
+    {
+        std::string SemanticName;
+        uint32_t SemanticIndex;
+        DXGI_FORMAT Format;
+        uint32_t AlignedByteOffset;
+        D3D12_INPUT_CLASSIFICATION InputSlotClass;
+        uint32_t InstanceDataStepRate;
+    };
+
     class dllexport D3DAttribute :
         public D3DData
     {
@@ -35,6 +45,6 @@ namespace DX {
     private:
         uint32_t m_stride;
         D3D12_VERTEX_BUFFER_VIEW m_view;
-        std::vector<D3D12_INPUT_ELEMENT_DESC> m_elements;
+        std::vector<InputElement> m_elements;
     };
 }

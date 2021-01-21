@@ -22,53 +22,6 @@ namespace DX
 
         namespace Direct3D12
         {
-            public ref struct InputElement
-            {
-            public:
-                System::String^ SemanticName;
-                System::UInt32 SemanticIndex;
-                DX::Sharp::DXGI::Format Format;
-                System::UInt32 InputSlot;
-                System::UInt32 AlignedByteOffset;
-                InputClassification InputSlotClass;
-                System::UInt32 InstanceDataStepRate;
-
-                !InputElement()
-                {
-                    if (m_ptr != System::IntPtr::Zero)
-                    {
-                        System::Runtime::InteropServices::Marshal::FreeHGlobal(m_ptr);
-                        m_ptr = System::IntPtr::Zero;
-                    }
-                }
-
-                ~InputElement()
-                {
-                    this->!InputElement();
-                }
-
-                static operator D3D12_INPUT_ELEMENT_DESC(InputElement% value)
-                {
-                    if (value.m_ptr == System::IntPtr::Zero)
-                    {
-                        value.m_ptr = System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(value.SemanticName);
-                    }
-                    return D3D12_INPUT_ELEMENT_DESC{
-                        static_cast<LPCSTR>((void*)value.m_ptr),
-                        value.SemanticIndex,
-                        static_cast<DXGI_FORMAT>(value.Format),
-                        value.InputSlot,
-                        value.AlignedByteOffset,
-                        static_cast<D3D12_INPUT_CLASSIFICATION>(value.InputSlotClass),
-                        value.InstanceDataStepRate
-                    };
-                }
-
-                static System::UInt32 AppendAlignedElement = D3D12_APPEND_ALIGNED_ELEMENT;
-            private:
-                System::IntPtr m_ptr;
-            };
-
             [System::Runtime::InteropServices::StructLayout(System::Runtime::InteropServices::LayoutKind::Sequential)]
             public value struct Viewport
             {

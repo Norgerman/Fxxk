@@ -28,7 +28,7 @@ namespace Fxxk.Net
             b.Identity();
             b.Translation(viewport.Width / 2, viewport.Height / 2, 0.0f);
             r.Multiply(b);
-            
+
             s.Multiply(t);
             s.Multiply(r);
 
@@ -47,6 +47,9 @@ namespace Fxxk.Net
 
             using var form = new Form();
             using var scene = new Scene3D();
+#if DEBUG
+            scene.EnableDebug();
+#endif
             scene.Initialize(form.Handle, 0.0f, 0.0f, form.Size.Width, form.Size.Height);
             float w = 1600;
             float h = 450;
@@ -98,7 +101,6 @@ namespace Fxxk.Net
                     SemanticName = "POS",
                     SemanticIndex = 0,
                     Format = Format.R32G32B32Float,
-                    InputSlot = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerVertexData,
                     InstanceDataStepRate = 0
@@ -108,7 +110,6 @@ namespace Fxxk.Net
                     SemanticName = "NORMAL",
                     SemanticIndex = 0,
                     Format = Format.R32G32B32Float,
-                    InputSlot = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerVertexData,
                     InstanceDataStepRate = 0
@@ -118,7 +119,6 @@ namespace Fxxk.Net
                     SemanticName = "TEXCOORD",
                     SemanticIndex = 0,
                     Format = Format.R32G32Float,
-                    InputSlot = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerVertexData,
                     InstanceDataStepRate = 0
@@ -132,7 +132,6 @@ namespace Fxxk.Net
                     SemanticName = "TEXMATRIX",
                     SemanticIndex = 0,
                     Format = Format.R32G32B32Float,
-                    InputSlot = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerInstanceData,
                     InstanceDataStepRate = 0
@@ -142,7 +141,6 @@ namespace Fxxk.Net
                     SemanticName = "TEXMATRIX",
                     SemanticIndex = 1,
                     Format = Format.R32G32B32Float,
-                    InputSlot = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerInstanceData,
                     InstanceDataStepRate = 0
@@ -152,7 +150,6 @@ namespace Fxxk.Net
                     SemanticName = "TEXMATRIX",
                     SemanticIndex = 2,
                     Format = Format.R32G32B32Float,
-                    InputSlot = 0,
                     AlignedByteOffset = InputElement.AppendAlignedElement,
                     InputSlotClass = InputClassification.PerInstanceData,
                     InstanceDataStepRate = 0
@@ -200,6 +197,9 @@ namespace Fxxk.Net
 
             scene.SetRenderList(new List<Object3D> { obj1, obj2 });
             using var transform = new XMMatrix();
+            var minimized = false;
+
+            scene.SetInactiveTargetUpdateTimeout(true, 1.0 / 30);
 
             form.Show();
 
@@ -208,7 +208,31 @@ namespace Fxxk.Net
                 scene.OnWindowSizeChanged(0.0f, 0.0f, form.Size.Width, form.Size.Height);
             };
 
-            uint count = 0;
+            form.Resize += (sender, e) =>
+            {
+                if (form.WindowState == FormWindowState.Minimized)
+                {
+                    scene.OnSuspending();
+                    minimized = true;
+                }
+                else if (minimized)
+                {
+                    scene.OnResuming();
+                    minimized = false;
+                }
+            };
+
+            form.Activated += (sender, e) =>
+            {
+                scene.OnActivated();
+            };
+
+            form.Deactivate += (sender, e) =>
+            {
+                scene.OnDeactivated();
+            };
+
+           uint count = 0;
             float scale = 1;
             float step = 0.01f;
             float angle = 0;

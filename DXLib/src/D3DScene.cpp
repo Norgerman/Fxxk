@@ -6,12 +6,9 @@
 #include <wil/result.h>
 #include <D3DScene.h>
 #include <D3DObject.h>
+#include <dxgidebug.h>
 #include "d3dx12.h"
 #include "StepTimer.h"
-
-#ifdef _DEBUG
-#include <dxgidebug.h>
-#endif
 
 namespace DX {
     using namespace DirectX;
@@ -35,7 +32,13 @@ namespace DX {
             m_projection(DirectX::XMMatrixIdentity()),
             m_suspended(false),
             m_objects(),
-            m_update([](D3DScene&, double) -> void {})
+            m_update([](D3DScene&, double) -> void {}),
+            m_debug(false),
+            m_inactive(false),
+            m_fixedTimeStep(false),
+            m_targetSecounds(0.0),
+            m_inactiveFixedTimeStep(false),
+            m_inactiveTargetSeconds(0.0)
         {
         }
 
@@ -52,12 +55,18 @@ namespace DX {
             m_projection(DirectX::XMMatrixIdentity()),
             m_suspended(false),
             m_objects(),
-            m_update([](D3DScene&, double) -> void {})
+            m_update([](D3DScene&, double) -> void {}),
+            m_debug(false),
+            m_inactive(false),
+            m_fixedTimeStep(false),
+            m_targetSecounds(0.0),
+            m_inactiveFixedTimeStep(false),
+            m_inactiveTargetSeconds(0.0)
         {
         }
 
         // Initialization and management
-        void Initialize(HWND window, float x, float y, float width, float height, bool fixedTimerStep, float targetSeconds)
+        void Initialize(HWND window, float x, float y, float width, float height)
         {
             m_window = window;
             m_viewport.TopLeftX = x;
@@ -68,8 +77,8 @@ namespace DX {
             CreateDevice();
             CreateResources();
 
-            m_timer.SetFixedTimeStep(fixedTimerStep);
-            m_timer.SetTargetElapsedSeconds(targetSeconds);
+            m_timer.SetFixedTimeStep(m_fixedTimeStep);
+            m_timer.SetTargetElapsedSeconds(m_targetSecounds);
         }
 
         void Tick()
@@ -87,15 +96,41 @@ namespace DX {
             Render();
         }
 
+        void SetTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds)
+        {
+            m_fixedTimeStep = fixedTimeStep;
+            m_targetSecounds = targetSeconds;
+            if (!m_inactive)
+            {
+                m_timer.SetFixedTimeStep(m_fixedTimeStep);
+                m_timer.SetTargetElapsedSeconds(m_targetSecounds);
+            }
+        }
+
+        void SetInactiveTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds)
+        {
+            m_inactiveFixedTimeStep = fixedTimeStep;
+            m_inactiveTargetSeconds = targetSeconds;
+            if (m_inactive)
+            {
+                m_timer.SetFixedTimeStep(m_inactiveFixedTimeStep);
+                m_timer.SetTargetElapsedSeconds(m_inactiveTargetSeconds);
+            }
+        }
+
         // Messages
         void OnActivated()
         {
-
+            m_inactive = false;
+            m_timer.SetFixedTimeStep(m_fixedTimeStep);
+            m_timer.SetTargetElapsedSeconds(m_targetSecounds);
         }
 
         void OnDeactivated()
         {
-
+            m_inactive = true;
+            m_timer.SetFixedTimeStep(m_inactiveFixedTimeStep);
+            m_timer.SetTargetElapsedSeconds(m_inactiveTargetSeconds);
         }
 
         void OnSuspending()
@@ -175,6 +210,11 @@ namespace DX {
         {
             m_projection = projection;
             m_projectionConstant->Update(&m_projection);
+        }
+
+        void EnableDebug()
+        {
+            m_debug = true;
         }
 
         ~Impl()
@@ -264,27 +304,27 @@ namespace DX {
         {
             DWORD dxgiFactoryFlags = 0;
 
-#if defined(_DEBUG)
-            // Enable the debug layer (requires the Graphics Tools "optional feature").
-            //
-            // NOTE: Enabling the debug layer after device creation will invalidate the active device.
-            {
-                ComPtr<ID3D12Debug> debugController;
-                if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
+            if (m_debug) {
+                // Enable the debug layer (requires the Graphics Tools "optional feature").
+                //
+                // NOTE: Enabling the debug layer after device creation will invalidate the active device.
                 {
-                    debugController->EnableDebugLayer();
-                }
+                    ComPtr<ID3D12Debug> debugController;
+                    if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
+                    {
+                        debugController->EnableDebugLayer();
+                    }
 
-                ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
-                if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
-                {
-                    dxgiFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+                    ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
+                    if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
+                    {
+                        dxgiFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 
-                    dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
-                    dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+                        dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
+                        dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+                    }
                 }
             }
-#endif
 
             THROW_IF_FAILED(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())));
 
@@ -298,26 +338,27 @@ namespace DX {
                 IID_PPV_ARGS(m_d3dDevice.ReleaseAndGetAddressOf())
             ));
 
-#ifndef NDEBUG
-            // Configure debug device (if active).
-            ComPtr<ID3D12InfoQueue> d3dInfoQueue;
-            if (SUCCEEDED(m_d3dDevice.As(&d3dInfoQueue)))
+            if (m_debug)
             {
-#ifdef _DEBUG
-                d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-                d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-#endif
-                D3D12_MESSAGE_ID hide[] =
+                // Configure debug device (if active).
+                ComPtr<ID3D12InfoQueue> d3dInfoQueue;
+                if (SUCCEEDED(m_d3dDevice.As(&d3dInfoQueue)))
                 {
-                    D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-                    D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
-                };
-                D3D12_INFO_QUEUE_FILTER filter = {};
-                filter.DenyList.NumIDs = _countof(hide);
-                filter.DenyList.pIDList = hide;
-                d3dInfoQueue->AddStorageFilterEntries(&filter);
+                    d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+                    d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+                    D3D12_MESSAGE_ID hide[] =
+                    {
+                        D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
+                        D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+                    };
+                    D3D12_INFO_QUEUE_FILTER filter = {};
+                    filter.DenyList.NumIDs = _countof(hide);
+                    filter.DenyList.pIDList = hide;
+                    d3dInfoQueue->AddStorageFilterEntries(&filter);
+                }
             }
-#endif
+
+
             // Create the command queue.
             D3D12_COMMAND_QUEUE_DESC queueDesc = {};
             queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -556,15 +597,13 @@ namespace DX {
                 }
             }
 
-#if !defined(NDEBUG)
-            if (!adapter)
+            if (!adapter && m_debug)
             {
                 if (FAILED(m_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf()))))
                 {
                     throw std::exception("WARP12 not available. Enable the 'Graphics Tools' optional feature");
                 }
             }
-#endif
 
             if (!adapter)
             {
@@ -640,6 +679,14 @@ namespace DX {
         vector<D3DObject*> m_objects;
         D3DScene* m_owner;
         bool m_suspended;
+        bool m_inactive;
+        bool m_debug;
+        
+        bool m_fixedTimeStep;
+        double m_targetSecounds;
+
+        bool m_inactiveFixedTimeStep;
+        double m_inactiveTargetSeconds;
     };
 
 
@@ -660,9 +707,19 @@ namespace DX {
     }
 
     // Initialize the Direct3D resources required to run.
-    void D3DScene::Initialize(HWND window, float x, float y, float width, float height, bool fixedTimerStep, float targetSeconds)
+    void D3DScene::Initialize(HWND window, float x, float y, float width, float height)
     {
-        m_impl->Initialize(window, x, y, width, height, fixedTimerStep, targetSeconds);
+        m_impl->Initialize(window, x, y, width, height);
+    }
+
+    void D3DScene::SetTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds)
+    {
+        m_impl->SetTargetUpdateTimeout(fixedTimeStep, targetSeconds);
+    }
+
+    void D3DScene::SetInactiveTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds)
+    {
+        m_impl->SetInactiveTargetUpdateTimeout(fixedTimeStep, targetSeconds);
     }
 
     void D3DScene::Tick()
@@ -724,6 +781,11 @@ namespace DX {
     void D3DScene::OnUpdate(function<void(D3DScene&, double)>&& update)
     {
         m_impl->OnUpdate(move(update));
+    }
+
+    void D3DScene::EnableDebug()
+    {
+        m_impl->EnableDebug();
     }
 
     ID3D12Device* D3DScene::Device() const
