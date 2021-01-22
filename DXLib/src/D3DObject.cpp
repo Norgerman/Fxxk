@@ -22,6 +22,7 @@ namespace DX {
             D3DEffect* effect,
             D3DDescriptorHeap* textureHeap,
             D3DDescriptorHeap* samplerHeap,
+            uint32_t instanceCount,
             D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
             m_attributes(move(attributes)),
             m_indices(indices),
@@ -29,6 +30,7 @@ namespace DX {
             m_effect(effect),
             m_textureHeap(textureHeap),
             m_samplerHeap(samplerHeap),
+            m_instanceCount(instanceCount),
             m_primitiveTopology(primitiveTopology),
             m_transform(DirectX::XMMatrixIdentity())
         {
@@ -41,6 +43,7 @@ namespace DX {
             D3DEffect* effect,
             D3DDescriptorHeap* textureHeap,
             D3DDescriptorHeap* samplerHeap,
+            uint32_t instanceCount,
             D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
             m_attributes(attributes),
             m_indices(indices),
@@ -48,6 +51,7 @@ namespace DX {
             m_effect(effect),
             m_textureHeap(textureHeap),
             m_samplerHeap(samplerHeap),
+            m_instanceCount(instanceCount),
             m_primitiveTopology(primitiveTopology),
             m_transform(DirectX::XMMatrixIdentity())
         {
@@ -123,7 +127,7 @@ namespace DX {
             }
             commandList->IASetVertexBuffers(0, static_cast<uint32_t>(vertexView.size()), vertexView.data());
             commandList->IASetPrimitiveTopology(m_primitiveTopology);
-            commandList->DrawIndexedInstanced(m_indices->Size(), 1, 0, 0, 0);
+            commandList->DrawIndexedInstanced(m_indices->Size(), m_instanceCount, 0, 0, 0);
         }
 
         void Reset()
@@ -160,6 +164,7 @@ namespace DX {
         D3DIndex* m_indices;
         XMMATRIX m_transform;
         D3D12_PRIMITIVE_TOPOLOGY m_primitiveTopology;
+        uint32_t m_instanceCount;
     };
 
     D3DObject::D3DObject(
@@ -169,8 +174,9 @@ namespace DX {
         D3DEffect* effect,
         D3DDescriptorHeap* textureHeap,
         D3DDescriptorHeap* samplerHeap,
+        uint32_t instanceCount,
         D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
-        m_impl(make_unique<Impl>(move(attributes), indices, move(constants), effect, textureHeap, samplerHeap, primitiveTopology))
+        m_impl(make_unique<Impl>(move(attributes), indices, move(constants), effect, textureHeap, samplerHeap, instanceCount, primitiveTopology))
 
     {
 
@@ -183,8 +189,9 @@ namespace DX {
         D3DEffect* effect,
         D3DDescriptorHeap* textureHeap,
         D3DDescriptorHeap* samplerHeap,
+        uint32_t instanceCount,
         D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) : 
-        m_impl(make_unique<Impl>(attributes, indices, constants, effect, textureHeap, samplerHeap, primitiveTopology))
+        m_impl(make_unique<Impl>(attributes, indices, constants, effect, textureHeap, samplerHeap, instanceCount, primitiveTopology))
     {
 
     }

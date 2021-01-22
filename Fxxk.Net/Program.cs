@@ -61,7 +61,7 @@ namespace Fxxk.Net
             scene.Initialize(form.Handle, 0.0f, 0.0f, form.Size.Width, form.Size.Height);
             float w = 1600;
             float h = 450;
-            var indices = new uint[6] { 0, 1, 2, 0, 2, 3 };
+            var indices = new ushort[6] { 0, 1, 2, 0, 2, 3 };
             var vertices = new Vertex[4]
             {
                 new Vertex()
@@ -90,7 +90,7 @@ namespace Fxxk.Net
                 }
             };
             var textureMatrixX = stackalloc float[9];
-            var textureMatrixY = stackalloc float[16];
+            var textureMatrixY = stackalloc float[12];
             var color = stackalloc float[4] {
                 0.0f,
                 0.0f,
@@ -166,10 +166,10 @@ namespace Fxxk.Net
                 }
             };
 
-            using var index = new MemoryIndex<uint>(scene, indices);
+            using var index = new MemoryIndex<ushort>(scene, indices);
             using var attribute1 = new MemoryAttribute<Vertex>(scene, vertices, (uint)sizeof(Vertex));
             using var attribute2 = new DX.Sharp.Attribute(scene, textureMatrixX, 4, 9, 36);
-            using var constant = new Constant(scene, textureMatrixY, 4, 16);
+            using var constant = new Constant(scene, textureMatrixY, 4, 12);
             using var constant2 = new Constant(scene, color, 4, 4);
             using var textureHeap1 = new DescriptorHeap(scene.Device, 2);
             using var textureHeap2 = new DescriptorHeap(scene.Device, 2);
@@ -198,8 +198,8 @@ namespace Fxxk.Net
             loader.End();
 
 
-            using var obj1 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant }, effect, textureHeap1, samplerHeap, PrimitiveTopology.TriangleList);
-            using var obj2 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant }, effect, textureHeap2, samplerHeap, PrimitiveTopology.TriangleList);
+            using var obj1 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant }, effect, textureHeap1, samplerHeap);
+            using var obj2 = new Object3D(new List<DX.Sharp.Attribute> { attribute1, attribute2 }, index, new List<Constant> { constant }, effect, textureHeap2, samplerHeap);
 
             obj1.Initialize(scene);
             obj2.Initialize(scene);

@@ -19,6 +19,7 @@ namespace DX
             Effect3D^ effect,
             DescriptorHeap^ textureHeap,
             DescriptorHeap^ samplerHeap,
+            System::UInt32 instanceCount,
             PrimitiveTopology primitiveTopology
         ) :
             m_attributes(attributes),
@@ -41,7 +42,19 @@ namespace DX
                 constantPtr.push_back(constant->Value);
             }
 
-            m_value = new D3DObject(move(attributePtr), m_index->Value, move(constantPtr), m_effect->Value, m_textureHeap->Value, m_samplerHeap->Value, static_cast<D3D12_PRIMITIVE_TOPOLOGY>(primitiveTopology));
+            m_value = new D3DObject(move(attributePtr), m_index->Value, move(constantPtr), m_effect->Value, m_textureHeap->Value, m_samplerHeap->Value, instanceCount, static_cast<D3D12_PRIMITIVE_TOPOLOGY>(primitiveTopology));
+        }
+
+        Object3D::Object3D(
+            IEnumerable<Attribute^>^ attributes,
+            Index^ index,
+            IEnumerable<Constant^>^ constants,
+            Effect3D^ effect,
+            DescriptorHeap^ textureHeap,
+            DescriptorHeap^ samplerHeap) :
+            Object3D(attributes, index, constants, effect, textureHeap, samplerHeap, 1, PrimitiveTopology::TriangleList)
+        {
+
         }
 
         void Object3D::Initialize(Scene3D^ scene)

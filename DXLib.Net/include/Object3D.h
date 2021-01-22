@@ -31,7 +31,16 @@ namespace DX
                 Effect3D^ effect,
                 DescriptorHeap^ textureHeap,
                 DescriptorHeap^ samplerHeap,
+                System::UInt32 instanceCount,
                 Direct3D::PrimitiveTopology primitiveTopology
+            );
+            Object3D(
+                System::Collections::Generic::IEnumerable<Attribute^>^ attributes,
+                Index^ index,
+                System::Collections::Generic::IEnumerable<Constant^>^ constants,
+                Effect3D^ effect,
+                DescriptorHeap^ textureHeap,
+                DescriptorHeap^ samplerHeap
             );
             virtual void Initialize(Scene3D^ scene);
             virtual void UpdateTransform(DX::Sharp::SimpleMath::XMMatrix^ transform);
