@@ -140,7 +140,6 @@ namespace DX
 
                     update();
                 }
-                render();
             }
             else
             {
@@ -151,13 +150,13 @@ namespace DX
                 m_frameCount++;
 
                 update();
-                render();
             }
 
             // Track the current framerate.
             if (m_frameCount != lastFrameCount)
             {
-                m_framesThisSecond += (m_frameCount - lastFrameCount);
+                m_framesThisSecond++;
+                render();
             }
 
             if (m_qpcSecondCounter >= static_cast<uint64_t>(m_qpcFrequency.QuadPart))
