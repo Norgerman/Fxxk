@@ -32,7 +32,6 @@
   </ItemGroup>
   <ItemGroup>
     <CompileShader Include="..\Shaders\VertexShader.hlsl">
-      <WindowsKitVersion>10.0.19041.0</WindowsKitVersion>
       <Shader>vs</Shader>
       <Entry>main</Entry>
       <SaveAsm>False</SaveAsm>

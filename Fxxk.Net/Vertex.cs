@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Fxxk.Net
+﻿namespace Fxxk.Net
 {
     public unsafe struct Vector2U32
     {

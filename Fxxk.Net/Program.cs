@@ -1,5 +1,4 @@
 using DX.Sharp;
-using DX.Sharp.Direct3D;
 using DX.Sharp.Direct3D12;
 using DX.Sharp.DXGI;
 using DX.Sharp.SimpleMath;
