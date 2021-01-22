@@ -4,9 +4,10 @@
 #include <wrl/event.h>
 #include <wrl/client.h>
 #include <wil/result.h>
+#include <dxgidebug.h>
 #include <D3DScene.h>
 #include <D3DObject.h>
-#include <dxgidebug.h>
+#include <D3DGlobal.h>
 #include "d3dx12.h"
 #include "StepTimer.h"
 
@@ -697,6 +698,12 @@ namespace DX {
         double m_inactiveTargetSeconds;
     };
 
+
+    D3DScene::D3DScene() noexcept : 
+        D3DScene(Global::backgroundColour, Global::Project, D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_0)
+    {
+
+    }
 
     D3DScene::D3DScene(const std::array<float, 4>& backgroundColor, const std::function<void(D3DScene&)>& rebuildProjection, D3D_FEATURE_LEVEL featureLevel) noexcept :
         m_impl(make_unique<Impl>(this, backgroundColor, rebuildProjection, featureLevel))

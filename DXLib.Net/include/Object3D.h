@@ -33,7 +33,8 @@ namespace DX
                 DescriptorHeap^ samplerHeap,
                 Direct3D::PrimitiveTopology primitiveTopology
             );
-            void UpdateTransform(DX::Sharp::SimpleMath::XMMatrix^ transform);
+            virtual void Initialize(Scene3D^ scene);
+            virtual void UpdateTransform(DX::Sharp::SimpleMath::XMMatrix^ transform);
             void UpdateIndices(void* data);
             void UpdateConstant(size_t index, void* data);
             void UpdateAttribute(size_t index, void* data);
@@ -43,8 +44,7 @@ namespace DX
                 void UpdateConstant(size_t index, System::Memory<T> data);
             generic<typename T> where T : value class
                 void UpdateAttribute(size_t index, System::Memory<T> data);
-            void Initialize(Scene3D^ scene);
-            ~Object3D();
+            virtual ~Object3D();
             !Object3D();
         private:
             DX::D3DObject* m_value;

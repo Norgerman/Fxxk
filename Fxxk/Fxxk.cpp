@@ -11,6 +11,7 @@
 #include <D3DAttribute.h>
 #include <D3DIndex.h>
 #include <D3DEffect.h>
+#include <D3DGlobal.h>
 #include <TextureLoader.h>
 
 #define M_PI acosf(-1.0)

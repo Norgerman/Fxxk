@@ -35,7 +35,7 @@ namespace DX
             std::vector<D3DConstant*>&& effectContants,
             size_t objectConstantCount, size_t textureCont, size_t samplerCount);
 
-        void Initialize(
+        virtual void Initialize(
             D3DScene& scene,
             D3D12_SHADER_BYTECODE& vertexShader,
             D3D12_SHADER_BYTECODE& pixelShader,
@@ -49,7 +49,7 @@ namespace DX
         size_t ObjectConstantStartSolt() const;
         void Apply(D3DScene& scene);
         void Reset();
-        ~D3DEffect();
+        virtual ~D3DEffect();
     private:
         class Impl;
         std::unique_ptr<Impl> m_impl;

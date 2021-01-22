@@ -81,23 +81,22 @@ namespace DX
             Scene3D();
             Scene3D(Color bg, DX::Sharp::Direct3D::FeatureLevel featureLevel);
 
-            void Initialize(System::IntPtr window, float x, float y, float width, float height);
+            virtual void Tick();
+            virtual void Initialize(System::IntPtr window, float x, float y, float width, float height);
+            virtual void SetRenderList(System::Collections::Generic::IEnumerable<Object3D^>^ objects);
+            virtual void UpdateProjection(DX::Sharp::SimpleMath::XMMatrix^ projection);
 
             void SetTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds);
             void SetInactiveTargetUpdateTimeout(bool fixedTimeStep, double targetSeconds);
 
-            void Tick();
             void OnActivated();
             void OnDeactivated();
             void OnSuspending();
             void OnResuming();
             void OnWindowSizeChanged(float x, float y, float width, float height);
-
-            void SetRenderList(System::Collections::Generic::IEnumerable<Object3D^>^ objects);
-            void UpdateProjection(DX::Sharp::SimpleMath::XMMatrix^ projection);
             void EnableDebug();
 
-            ~Scene3D();
+            virtual ~Scene3D();
             !Scene3D();
         private:
             delegate void NativeProjCallback(DX::D3DScene&);

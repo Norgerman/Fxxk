@@ -40,7 +40,7 @@ namespace DX
                 System::Collections::Generic::IEnumerable<Constant^>^ effectContants,
                 System::Int32 objectConstantCount, System::Int32 textureCont, System::Int32 samplerCount);
             
-            void Initialize(
+            virtual void Initialize(
                 Scene3D^ scene,
                 System::Memory<System::Byte> vertexShader,
                 System::Memory<System::Byte> pixelShader,
@@ -64,7 +64,7 @@ namespace DX
             );
             
             !Effect3D();
-            ~Effect3D();
+            virtual ~Effect3D();
 
         private:
             System::Collections::Generic::IEnumerable<Constant^>^ m_constants;

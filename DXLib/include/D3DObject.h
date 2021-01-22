@@ -32,15 +32,15 @@ namespace DX {
             D3DDescriptorHeap* textureHeap,
             D3DDescriptorHeap* samplerHeap,
             D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        void Initialize(D3DScene& scene);
-        void UpdateTransform(const DirectX::XMMATRIX& transform);
-        void UpdateTransform(DirectX::XMMATRIX&& transform);
+        virtual void Initialize(D3DScene& scene);
+        virtual void UpdateTransform(const DirectX::XMMATRIX& transform);
+        virtual void UpdateTransform(DirectX::XMMATRIX&& transform);
         void UpdateIndices(const void* data);
         void UpdateConstant(size_t index, const void* data);
         void UpdateAttribute(size_t index, const void* data);
         void Reset();
         void Render(D3DScene& scene);
-        ~D3DObject();
+        virtual ~D3DObject();
     private:
         class Impl;
         std::unique_ptr<Impl> m_impl;
