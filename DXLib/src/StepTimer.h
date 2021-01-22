@@ -155,7 +155,7 @@ namespace DX
             // Track the current framerate.
             if (m_frameCount != lastFrameCount)
             {
-                m_framesThisSecond++;
+                m_framesThisSecond += (m_frameCount - lastFrameCount);
             }
 
             if (m_qpcSecondCounter >= static_cast<uint64_t>(m_qpcFrequency.QuadPart))

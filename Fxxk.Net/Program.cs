@@ -245,7 +245,6 @@ namespace Fxxk.Net
 
             scene.OnUpdate += (scene, second, frame) =>
             {
-
                 if (frame > 1)
                 {
                     scale += step;
