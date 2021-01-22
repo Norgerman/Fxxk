@@ -92,6 +92,8 @@ namespace DX {
             m_timer.Tick([&]()
                 {
                     Update(m_timer);
+                }, [&]() 
+                {
                     Render();
                 });
         }

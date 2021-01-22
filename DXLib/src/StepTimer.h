@@ -84,8 +84,8 @@ namespace DX
         }
 
         // Update timer state, calling the specified Update function the appropriate number of times.
-        template<typename TUpdate>
-        void Tick(const TUpdate& update)
+        template<typename T1, typename T2>
+        void Tick(const T1& update, const T2& render)
         {
             // Query the current time.
             LARGE_INTEGER currentTime;
@@ -140,6 +140,7 @@ namespace DX
 
                     update();
                 }
+                render();
             }
             else
             {
@@ -150,6 +151,7 @@ namespace DX
                 m_frameCount++;
 
                 update();
+                render();
             }
 
             // Track the current framerate.
