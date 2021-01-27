@@ -109,6 +109,11 @@ namespace DX
             m_value->EnableDebug();
         }
 
+        void Scene3D::WaitForGpu()
+        {
+            m_value->WaitForGpu();
+        }
+
         void Scene3D::Project(DX::D3DScene& scene)
         {
             m_reproject(this);

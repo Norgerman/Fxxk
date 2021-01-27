@@ -62,6 +62,7 @@ namespace DX {
         void OnUpdate(const std::function<void(D3DScene&, double, uint32_t)>& update);
         void OnUpdate(std::function<void(D3DScene&, double, uint32_t)>&& update);
         void EnableDebug();
+        void WaitForGpu();
     private:
         class Impl;
         std::unique_ptr<Impl> m_impl;

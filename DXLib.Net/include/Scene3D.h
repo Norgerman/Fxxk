@@ -95,6 +95,7 @@ namespace DX
             void OnResuming();
             void OnWindowSizeChanged(float x, float y, float width, float height);
             void EnableDebug();
+            void WaitForGpu();
 
             virtual ~Scene3D();
             !Scene3D();

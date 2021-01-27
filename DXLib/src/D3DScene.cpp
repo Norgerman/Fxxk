@@ -224,6 +224,26 @@ namespace DX {
             return m_timer.GetFramesPerSecond();
         }
 
+        void WaitForGpu() noexcept
+        {
+            if (m_commandQueue && m_fence && m_fenceEvent.IsValid())
+            {
+                // Schedule a Signal command in the GPU queue.
+                UINT64 fenceValue = m_fenceValues[m_backBufferIndex];
+                if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), fenceValue)))
+                {
+                    // Wait until the Signal has been processed.
+                    if (SUCCEEDED(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent.Get())))
+                    {
+                        WaitForSingleObjectEx(m_fenceEvent.Get(), INFINITE, FALSE);
+
+                        // Increment the fence value for the current frame.
+                        m_fenceValues[m_backBufferIndex]++;
+                    }
+                }
+            }
+        }
+
         void* operator new(size_t i)
         {
             return _mm_malloc(i, 16);
@@ -545,26 +565,6 @@ namespace DX {
             m_rebuildProjection(*this->m_owner);
         }
 
-        void WaitForGpu() noexcept
-        {
-            if (m_commandQueue && m_fence && m_fenceEvent.IsValid())
-            {
-                // Schedule a Signal command in the GPU queue.
-                UINT64 fenceValue = m_fenceValues[m_backBufferIndex];
-                if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), fenceValue)))
-                {
-                    // Wait until the Signal has been processed.
-                    if (SUCCEEDED(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent.Get())))
-                    {
-                        WaitForSingleObjectEx(m_fenceEvent.Get(), INFINITE, FALSE);
-
-                        // Increment the fence value for the current frame.
-                        m_fenceValues[m_backBufferIndex]++;
-                    }
-                }
-            }
-        }
-
         void MoveToNextFrame()
         {
             // Schedule a Signal command in the queue.
@@ -803,6 +803,11 @@ namespace DX {
     void D3DScene::EnableDebug()
     {
         m_impl->EnableDebug();
+    }
+
+    void D3DScene::WaitForGpu()
+    {
+        m_impl->WaitForGpu();
     }
 
     uint32_t D3DScene::FramesPerSecond() const
