@@ -88,7 +88,16 @@ namespace DX {
         {
             auto commandList = scene.CommandList();
             uint32_t idx = static_cast<uint32_t>(m_effect->ObjectConstantStartSolt());
-            ID3D12DescriptorHeap* heaps[] = { m_textureHeap->Heap(), m_samplerHeap->Heap() };
+            vector<ID3D12DescriptorHeap*> heaps;
+            if (m_textureHeap)
+            {
+                heaps.push_back(m_textureHeap->Heap());
+            }
+
+            if (m_samplerHeap)
+            {
+                heaps.push_back(m_samplerHeap->Heap());
+            }
 
             m_effect->Apply(scene);
 
@@ -102,17 +111,20 @@ namespace DX {
             }
 
             // heaps
-            commandList->SetDescriptorHeaps(2, heaps);
+            if (heaps.size() > 0)
+            {
+                commandList->SetDescriptorHeaps(static_cast<uint32_t>(heaps.size()), heaps.data());
+            }
 
             // textures
-            auto count = m_textureHeap->Count();
+            auto count = m_textureHeap ? m_textureHeap->Count() : 0;
             for (size_t i = 0; i < count; i++, idx++)
             {
                 commandList->SetGraphicsRootDescriptorTable(idx, m_textureHeap->GetGpuHandle(i));
             }
 
             // samplers
-            count = m_samplerHeap->Count();
+            count = m_samplerHeap ? m_samplerHeap->Count() : 0;
             for (size_t i = 0; i < count; i++, idx++)
             {
                 commandList->SetGraphicsRootDescriptorTable(idx, m_samplerHeap->GetGpuHandle(i));
@@ -190,7 +202,7 @@ namespace DX {
         D3DDescriptorHeap* textureHeap,
         D3DDescriptorHeap* samplerHeap,
         uint32_t instanceCount,
-        D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) : 
+        D3D12_PRIMITIVE_TOPOLOGY primitiveTopology) :
         m_impl(make_unique<Impl>(attributes, indices, constants, effect, textureHeap, samplerHeap, instanceCount, primitiveTopology))
     {
 

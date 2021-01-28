@@ -42,7 +42,7 @@ namespace DX
                 constantPtr.push_back(constant->Value);
             }
 
-            m_value = new D3DObject(move(attributePtr), m_index->Value, move(constantPtr), m_effect->Value, m_textureHeap->Value, m_samplerHeap->Value, instanceCount, static_cast<D3D12_PRIMITIVE_TOPOLOGY>(primitiveTopology));
+            m_value = new D3DObject(move(attributePtr), m_index->Value, move(constantPtr), m_effect->Value, m_textureHeap ? m_textureHeap->Value : nullptr, m_samplerHeap ? m_samplerHeap->Value : nullptr, instanceCount, static_cast<D3D12_PRIMITIVE_TOPOLOGY>(primitiveTopology));
         }
 
         Object3D::Object3D(

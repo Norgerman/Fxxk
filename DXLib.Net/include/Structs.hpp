@@ -9,6 +9,7 @@ namespace DX
 {
     namespace Sharp
     {
+        [System::Runtime::InteropServices::StructLayout(System::Runtime::InteropServices::LayoutKind::Sequential)]
         public value struct Color
         {
         public:
