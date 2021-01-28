@@ -10,6 +10,7 @@ cbuffer VS_PROJECTION_BUFFER: register(b0) {
 
 cbuffer VS_TRANSFORM_BUFFER: register(b2) {
     matrix transform;
+    matrix transformInverse;
 };
 
 cbuffer VS_TEX_BUFFER : register(b3) {
@@ -28,7 +29,7 @@ VS_OUT main(VS_IN input) {
     float4 f = mul(transform, float4(input.position, 1.0f));
     output.world_position = f.xyz;
     output.position = mul(projection, f);
-    output.normal = normalize(mul(transform, float4(input.normal, 0.0f)).xyz);
+    output.normal = normalize(mul(float4(input.normal, 0.0f), transformInverse).xyz);
     output.tex = mul(tex_mY, mul(input.tex_transform, float3(input.tex, 1.0f))).xy;
     return output;
 }

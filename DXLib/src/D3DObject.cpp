@@ -13,6 +13,12 @@ namespace DX {
     using namespace std;
     using namespace Microsoft::WRL;
 
+    typedef struct BasicObjectConstant
+    {
+        XMMATRIX Transform;
+        XMMATRIX TransformInverse;
+    } BasicObjectConstant;
+
     __declspec(align(16)) class D3DObject::Impl {
     public:
         Impl(
@@ -32,7 +38,7 @@ namespace DX {
             m_samplerHeap(samplerHeap),
             m_instanceCount(instanceCount),
             m_primitiveTopology(primitiveTopology),
-            m_transform(DirectX::XMMatrixIdentity())
+            m_baiscConstant({ XMMatrixIdentity(), XMMatrixIdentity() })
         {
         }
 
@@ -53,20 +59,21 @@ namespace DX {
             m_samplerHeap(samplerHeap),
             m_instanceCount(instanceCount),
             m_primitiveTopology(primitiveTopology),
-            m_transform(DirectX::XMMatrixIdentity())
+            m_baiscConstant({ XMMatrixIdentity(), XMMatrixIdentity() })
         {
         }
 
         void Initialize(D3DScene& scene)
         {
-            m_transformBuffer = make_unique<D3DConstant>(&scene, 4, 16);
-            m_transformBuffer->Update(&m_transform);
+            m_transformBuffer = make_unique<D3DConstant>(&scene, 4, 32);
+            m_transformBuffer->Update(&m_baiscConstant);
         }
 
         void UpdateTransform(const XMMATRIX& transform)
         {
-            m_transform = transform;
-            m_transformBuffer->Update(&m_transform);
+            m_baiscConstant.Transform = transform;
+            m_baiscConstant.TransformInverse = XMMatrixInverse(nullptr, transform);
+            m_transformBuffer->Update(&m_baiscConstant);
         }
 
         void UpdateIndices(const void* data)
@@ -174,7 +181,7 @@ namespace DX {
         D3DDescriptorHeap* m_samplerHeap;
         unique_ptr<D3DConstant> m_transformBuffer;
         D3DIndex* m_indices;
-        XMMATRIX m_transform;
+        BasicObjectConstant m_baiscConstant;
         D3D12_PRIMITIVE_TOPOLOGY m_primitiveTopology;
         uint32_t m_instanceCount;
     };
