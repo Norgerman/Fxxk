@@ -19,7 +19,8 @@ namespace DX {
         XMMATRIX TransformInverse;
     } BasicObjectConstant;
 
-    __declspec(align(16)) class D3DObject::Impl {
+    __declspec(align(16)) class D3DObject::Impl
+    {
     public:
         Impl(
             vector<D3DAttribute*>&& attributes,
