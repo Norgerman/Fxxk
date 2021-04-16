@@ -1,6 +1,6 @@
 #include <EffectPipelineStateDescription.h>
 #include <DirectXHelpers.h>
-#include <wrl/client.h>
+#include <winrt/base.h>
 #include <wil/result.h>
 #include <D3DScene.h>
 #include <D3DObject.h>
@@ -11,7 +11,7 @@
 namespace DX {
     using namespace DirectX;
     using namespace std;
-    using namespace Microsoft::WRL;
+    using namespace winrt;
 
     typedef struct BasicObjectConstant
     {

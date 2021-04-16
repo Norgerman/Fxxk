@@ -1,21 +1,19 @@
 #include <algorithm>
 #include <DirectXMath.h>
 #include <DirectXColors.h>
-#include <wrl/event.h>
-#include <wrl/client.h>
 #include <wil/result.h>
 #include <dxgidebug.h>
 #include <D3DScene.h>
 #include <D3DObject.h>
 #include <D3DGlobal.h>
+#include <winrt/base.h>
 #include "d3dx12.h"
 #include "StepTimer.h"
 
 namespace DX {
     using namespace DirectX;
     using namespace std;
-    using Microsoft::WRL::ComPtr;
-    using Microsoft::WRL::Wrappers::Event;
+    using namespace winrt;
 
     __declspec(align(16)) class D3DScene::Impl
     {
@@ -169,17 +167,17 @@ namespace DX {
 
         ID3D12Device* Device() const
         {
-            return m_d3dDevice.Get();
+            return m_d3dDevice.get();
         }
 
         ID3D12CommandQueue* CommandQueue() const
         {
-            return m_commandQueue.Get();
+            return m_commandQueue.get();
         }
 
         ID3D12GraphicsCommandList* CommandList() const
         {
-            return m_commandList.Get();
+            return m_commandList.get();
         }
 
         const D3D12_VIEWPORT& Viewport() const
@@ -226,16 +224,16 @@ namespace DX {
 
         void WaitForGpu() noexcept
         {
-            if (m_commandQueue && m_fence && m_fenceEvent.IsValid())
+            if (m_commandQueue && m_fence && m_fenceEvent)
             {
                 // Schedule a Signal command in the GPU queue.
                 UINT64 fenceValue = m_fenceValues[m_backBufferIndex];
-                if (SUCCEEDED(m_commandQueue->Signal(m_fence.Get(), fenceValue)))
+                if (SUCCEEDED(m_commandQueue->Signal(m_fence.get(), fenceValue)))
                 {
                     // Wait until the Signal has been processed.
-                    if (SUCCEEDED(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent.Get())))
+                    if (SUCCEEDED(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent.get())))
                     {
-                        WaitForSingleObjectEx(m_fenceEvent.Get(), INFINITE, FALSE);
+                        WaitForSingleObjectEx(m_fenceEvent.get(), INFINITE, FALSE);
 
                         // Increment the fence value for the current frame.
                         m_fenceValues[m_backBufferIndex]++;
@@ -281,11 +279,11 @@ namespace DX {
         void Clear()
         {
             // Reset command list and allocator.
-            THROW_IF_FAILED(m_commandAllocators[m_backBufferIndex]->Reset());
-            THROW_IF_FAILED(m_commandList->Reset(m_commandAllocators[m_backBufferIndex].Get(), nullptr));
+            winrt::check_hresult(m_commandAllocators[m_backBufferIndex]->Reset());
+            winrt::check_hresult(m_commandList->Reset(m_commandAllocators[m_backBufferIndex].get(), nullptr));
 
             // Transition the render target into the correct state to allow for drawing into it.
-            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backBufferIndex].get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
             m_commandList->ResourceBarrier(1, &barrier);
 
             // Clear the views.
@@ -306,12 +304,13 @@ namespace DX {
         void Present()
         {
             // Transition the render target to the state that allows it to be presented to the display.
-            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+            D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backBufferIndex].get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
             m_commandList->ResourceBarrier(1, &barrier);
 
             // Send the command list off to the GPU for processing.
-            THROW_IF_FAILED(m_commandList->Close());
-            m_commandQueue->ExecuteCommandLists(1, CommandListCast(m_commandList.GetAddressOf()));
+            winrt::check_hresult(m_commandList->Close());
+            auto ptr = m_commandList.get();
+            m_commandQueue->ExecuteCommandLists(1, CommandListCast(&ptr));
 
             // The first argument instructs DXGI to block until VSync, putting the application
             // to sleep until the next VSync. This ensures we don't waste any cycles rendering
@@ -325,7 +324,7 @@ namespace DX {
             }
             else
             {
-                THROW_IF_FAILED(hr);
+                winrt::check_hresult(hr);
 
                 MoveToNextFrame();
             }
@@ -340,14 +339,14 @@ namespace DX {
                 //
                 // NOTE: Enabling the debug layer after device creation will invalidate the active device.
                 {
-                    ComPtr<ID3D12Debug> debugController;
-                    if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(debugController.GetAddressOf()))))
+                    com_ptr<ID3D12Debug> debugController;
+                    if (SUCCEEDED(D3D12GetDebugInterface(__uuidof(debugController), debugController.put_void())))
                     {
                         debugController->EnableDebugLayer();
                     }
 
-                    ComPtr<IDXGIInfoQueue> dxgiInfoQueue;
-                    if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(dxgiInfoQueue.GetAddressOf()))))
+                    com_ptr<IDXGIInfoQueue> dxgiInfoQueue;
+                    if (SUCCEEDED(DXGIGetDebugInterface1(0, __uuidof(dxgiInfoQueue), dxgiInfoQueue.put_void())))
                     {
                         dxgiFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 
@@ -357,23 +356,25 @@ namespace DX {
                 }
             }
 
-            THROW_IF_FAILED(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(m_dxgiFactory.ReleaseAndGetAddressOf())));
+            winrt::check_hresult(CreateDXGIFactory2(dxgiFactoryFlags, __uuidof(m_dxgiFactory), m_dxgiFactory.put_void()));
 
-            ComPtr<IDXGIAdapter1> adapter;
-            GetAdapter(adapter.GetAddressOf());
+            com_ptr<IDXGIAdapter1> adapter;
+            GetAdapter(adapter.put());
 
             // Create the DX12 API device object.
-            THROW_IF_FAILED(D3D12CreateDevice(
-                adapter.Get(),
+            winrt::check_hresult(D3D12CreateDevice(
+                adapter.get(),
                 m_featureLevel,
-                IID_PPV_ARGS(m_d3dDevice.ReleaseAndGetAddressOf())
+                __uuidof(m_d3dDevice),
+                m_d3dDevice.put_void()
             ));
 
             if (m_debug)
             {
                 // Configure debug device (if active).
-                ComPtr<ID3D12InfoQueue> d3dInfoQueue;
-                if (SUCCEEDED(m_d3dDevice.As(&d3dInfoQueue)))
+                com_ptr<ID3D12InfoQueue> d3dInfoQueue;
+
+                if (m_d3dDevice.try_as(d3dInfoQueue))
                 {
                     d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
                     d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
@@ -395,7 +396,7 @@ namespace DX {
             queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
             queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
-            THROW_IF_FAILED(m_d3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(m_commandQueue.ReleaseAndGetAddressOf())));
+            winrt::check_hresult(m_d3dDevice->CreateCommandQueue(&queueDesc, __uuidof(m_commandQueue), m_commandQueue.put_void()));
 
             // Create descriptor heaps for render target views and depth stencil views.
             D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc = {};
@@ -406,33 +407,33 @@ namespace DX {
             dsvDescriptorHeapDesc.NumDescriptors = 1;
             dsvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 
-            THROW_IF_FAILED(m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(m_rtvDescriptorHeap.ReleaseAndGetAddressOf())));
-            THROW_IF_FAILED(m_d3dDevice->CreateDescriptorHeap(&dsvDescriptorHeapDesc, IID_PPV_ARGS(m_dsvDescriptorHeap.ReleaseAndGetAddressOf())));
+            winrt::check_hresult(m_d3dDevice->CreateDescriptorHeap(&rtvDescriptorHeapDesc, __uuidof(m_rtvDescriptorHeap), m_rtvDescriptorHeap.put_void()));
+            winrt::check_hresult(m_d3dDevice->CreateDescriptorHeap(&dsvDescriptorHeapDesc, __uuidof(m_dsvDescriptorHeap), m_dsvDescriptorHeap.put_void()));
 
             m_rtvDescriptorSize = m_d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
             // Create a command allocator for each back buffer that will be rendered to.
             for (UINT n = 0; n < c_swapBufferCount; n++)
             {
-                THROW_IF_FAILED(m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(m_commandAllocators[n].ReleaseAndGetAddressOf())));
+                winrt::check_hresult(m_d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(m_commandAllocators[n]), m_commandAllocators[n].put_void()));
             }
 
             // Create a command list for recording graphics commands.
-            THROW_IF_FAILED(m_d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(m_commandList.ReleaseAndGetAddressOf())));
-            THROW_IF_FAILED(m_commandList->Close());
+            winrt::check_hresult(m_d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[0].get(), nullptr, __uuidof(m_commandList), m_commandList.put_void()));
+            winrt::check_hresult(m_commandList->Close());
 
             // Create a fence for tracking GPU execution progress.
-            THROW_IF_FAILED(m_d3dDevice->CreateFence(m_fenceValues[m_backBufferIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_fence.ReleaseAndGetAddressOf())));
+            winrt::check_hresult(m_d3dDevice->CreateFence(m_fenceValues[m_backBufferIndex], D3D12_FENCE_FLAG_NONE, __uuidof(m_fence), m_fence.put_void()));
             m_fenceValues[m_backBufferIndex]++;
 
-            m_fenceEvent.Attach(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
-            if (!m_fenceEvent.IsValid())
+            m_fenceEvent.attach(CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE));
+            if (!m_fenceEvent)
             {
                 throw std::exception("CreateEvent");
             }
 
             // Initialize device dependent objects here (independent of window size).
-            m_memory = std::make_unique<GraphicsMemory>(m_d3dDevice.Get());
+            m_memory = std::make_unique<GraphicsMemory>(m_d3dDevice.get());
             m_projectionConstant = std::make_unique<D3DConstant>(this->m_owner, 4, 16);
             m_projectionConstant->Update(&m_projection);
         }
@@ -445,7 +446,7 @@ namespace DX {
             // Release resources that are tied to the swap chain and update fence values.
             for (UINT n = 0; n < c_swapBufferCount; n++)
             {
-                m_renderTargets[n].Reset();
+                m_renderTargets[n] = nullptr;
                 m_fenceValues[n] = m_fenceValues[m_backBufferIndex];
             }
 
@@ -470,7 +471,7 @@ namespace DX {
                 }
                 else
                 {
-                    THROW_IF_FAILED(hr);
+                    winrt::check_hresult(hr);
                 }
             }
             else
@@ -492,27 +493,28 @@ namespace DX {
                 fsSwapChainDesc.Windowed = TRUE;
 
                 // Create a swap chain for the window.
-                ComPtr<IDXGISwapChain1> swapChain;
-                THROW_IF_FAILED(m_dxgiFactory->CreateSwapChainForHwnd(
-                    m_commandQueue.Get(),
+                com_ptr<IDXGISwapChain1> swapChain;
+                winrt::check_hresult(m_dxgiFactory->CreateSwapChainForHwnd(
+                    m_commandQueue.get(),
                     m_window,
                     &swapChainDesc,
                     &fsSwapChainDesc,
                     nullptr,
-                    swapChain.GetAddressOf()
+                    swapChain.put()
                 ));
 
-                THROW_IF_FAILED(swapChain.As(&m_swapChain));
+
+                swapChain.as(m_swapChain);
 
                 // This template does not support exclusive fullscreen mode and prevents DXGI from responding to the ALT+ENTER shortcut
-                THROW_IF_FAILED(m_dxgiFactory->MakeWindowAssociation(m_window, DXGI_MWA_NO_ALT_ENTER));
+                winrt::check_hresult(m_dxgiFactory->MakeWindowAssociation(m_window, DXGI_MWA_NO_ALT_ENTER));
             }
 
             // Obtain the back buffers for this window which will be the final render targets
             // and create render target views for each of them.
             for (UINT n = 0; n < c_swapBufferCount; n++)
             {
-                THROW_IF_FAILED(m_swapChain->GetBuffer(n, IID_PPV_ARGS(m_renderTargets[n].GetAddressOf())));
+                winrt::check_hresult(m_swapChain->GetBuffer(n, __uuidof(m_renderTargets[n]), m_renderTargets[n].put_void()));
 
                 wchar_t name[25] = {};
                 m_renderTargets[n]->SetName(name);
@@ -520,7 +522,7 @@ namespace DX {
                 CD3DX12_CPU_DESCRIPTOR_HANDLE rtvDescriptor(
                     m_rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
                     static_cast<INT>(n), m_rtvDescriptorSize);
-                m_d3dDevice->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvDescriptor);
+                m_d3dDevice->CreateRenderTargetView(m_renderTargets[n].get(), nullptr, rtvDescriptor);
             }
 
             // Reset the index to the current back buffer.
@@ -544,13 +546,14 @@ namespace DX {
             depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
             depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
-            THROW_IF_FAILED(m_d3dDevice->CreateCommittedResource(
+            winrt::check_hresult(m_d3dDevice->CreateCommittedResource(
                 &depthHeapProperties,
                 D3D12_HEAP_FLAG_NONE,
                 &depthStencilDesc,
                 D3D12_RESOURCE_STATE_DEPTH_WRITE,
                 &depthOptimizedClearValue,
-                IID_PPV_ARGS(m_depthStencil.ReleaseAndGetAddressOf())
+                __uuidof(m_depthStencil),
+                m_depthStencil.put_void()
             ));
 
             m_depthStencil->SetName(L"Depth stencil");
@@ -559,7 +562,7 @@ namespace DX {
             dsvDesc.Format = depthBufferFormat;
             dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 
-            m_d3dDevice->CreateDepthStencilView(m_depthStencil.Get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+            m_d3dDevice->CreateDepthStencilView(m_depthStencil.get(), &dsvDesc, m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
             // Initialize windows-size dependent objects here.
             m_rebuildProjection(*this->m_owner);
@@ -569,7 +572,7 @@ namespace DX {
         {
             // Schedule a Signal command in the queue.
             const UINT64 currentFenceValue = m_fenceValues[m_backBufferIndex];
-            THROW_IF_FAILED(m_commandQueue->Signal(m_fence.Get(), currentFenceValue));
+            winrt::check_hresult(m_commandQueue->Signal(m_fence.get(), currentFenceValue));
 
             // Update the back buffer index.
             m_backBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
@@ -577,8 +580,8 @@ namespace DX {
             // If the next frame is not ready to be rendered yet, wait until it is ready.
             if (m_fence->GetCompletedValue() < m_fenceValues[m_backBufferIndex])
             {
-                THROW_IF_FAILED(m_fence->SetEventOnCompletion(m_fenceValues[m_backBufferIndex], m_fenceEvent.Get()));
-                WaitForSingleObjectEx(m_fenceEvent.Get(), INFINITE, FALSE);
+                winrt::check_hresult(m_fence->SetEventOnCompletion(m_fenceValues[m_backBufferIndex], m_fenceEvent.get()));
+                WaitForSingleObjectEx(m_fenceEvent.get(), INFINITE, FALSE);
             }
 
             // Set the fence value for the next frame.
@@ -589,11 +592,13 @@ namespace DX {
         {
             *ppAdapter = nullptr;
 
-            ComPtr<IDXGIAdapter1> adapter;
-            for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != m_dxgiFactory->EnumAdapters1(adapterIndex, adapter.ReleaseAndGetAddressOf()); ++adapterIndex)
+            com_ptr<IDXGIAdapter1> adapter;
+            IDXGIAdapter1* ptr;
+            for (UINT adapterIndex = 0; DXGI_ERROR_NOT_FOUND != m_dxgiFactory->EnumAdapters1(adapterIndex, &ptr); ++adapterIndex)
             {
+                adapter.attach(ptr);
                 DXGI_ADAPTER_DESC1 desc;
-                THROW_IF_FAILED(adapter->GetDesc1(&desc));
+                winrt::check_hresult(adapter->GetDesc1(&desc));
 
                 if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
                 {
@@ -602,7 +607,7 @@ namespace DX {
                 }
 
                 // Check to see if the adapter supports Direct3D 12, but don't create the actual device yet.
-                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_featureLevel, _uuidof(ID3D12Device), nullptr)))
+                if (SUCCEEDED(D3D12CreateDevice(adapter.get(), m_featureLevel, _uuidof(ID3D12Device), nullptr)))
                 {
                     break;
                 }
@@ -610,7 +615,7 @@ namespace DX {
 
             if (!adapter && m_debug)
             {
-                if (FAILED(m_dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf()))))
+                if (FAILED(m_dxgiFactory->EnumWarpAdapter(__uuidof(adapter), adapter.put_void())))
                 {
                     throw std::exception("WARP12 not available. Enable the 'Graphics Tools' optional feature");
                 }
@@ -621,26 +626,26 @@ namespace DX {
                 throw std::exception("No Direct3D 12 device found");
             }
 
-            *ppAdapter = adapter.Detach();
+            *ppAdapter = adapter.detach();
         }
 
         void OnDeviceLost()
         {
             for (UINT n = 0; n < c_swapBufferCount; n++)
             {
-                m_commandAllocators[n].Reset();
-                m_renderTargets[n].Reset();
+                m_commandAllocators[n] = nullptr;
+                m_renderTargets[n] = nullptr;
             }
 
-            m_depthStencil.Reset();
-            m_fence.Reset();
-            m_commandList.Reset();
-            m_swapChain.Reset();
-            m_rtvDescriptorHeap.Reset();
-            m_dsvDescriptorHeap.Reset();
-            m_commandQueue.Reset();
-            m_d3dDevice.Reset();
-            m_dxgiFactory.Reset();
+            m_depthStencil = nullptr;
+            m_fence = nullptr;
+            m_commandList = nullptr;
+            m_swapChain = nullptr;
+            m_rtvDescriptorHeap = nullptr;
+            m_dsvDescriptorHeap = nullptr;
+            m_commandQueue = nullptr;
+            m_d3dDevice = nullptr;
+            m_dxgiFactory = nullptr;
             m_memory.reset();
             m_projectionConstant->Reset();
             for (auto& obj : m_objects)
@@ -661,24 +666,24 @@ namespace DX {
         static const UINT c_swapBufferCount = 2;
         UINT m_backBufferIndex;
         UINT m_rtvDescriptorSize;
-        ComPtr<ID3D12Device> m_d3dDevice;
-        ComPtr<IDXGIFactory4> m_dxgiFactory;
-        ComPtr<ID3D12CommandQueue> m_commandQueue;
-        ComPtr<ID3D12DescriptorHeap> m_rtvDescriptorHeap;
-        ComPtr<ID3D12DescriptorHeap> m_dsvDescriptorHeap;
-        ComPtr<ID3D12CommandAllocator> m_commandAllocators[c_swapBufferCount];
-        ComPtr<ID3D12GraphicsCommandList> m_commandList;
-        ComPtr<ID3D12Fence> m_fence;
+        com_ptr<ID3D12Device> m_d3dDevice;
+        com_ptr<IDXGIFactory4> m_dxgiFactory;
+        com_ptr<ID3D12CommandQueue> m_commandQueue;
+        com_ptr<ID3D12DescriptorHeap> m_rtvDescriptorHeap;
+        com_ptr<ID3D12DescriptorHeap> m_dsvDescriptorHeap;
+        com_ptr<ID3D12CommandAllocator> m_commandAllocators[c_swapBufferCount];
+        com_ptr<ID3D12GraphicsCommandList> m_commandList;
+        com_ptr<ID3D12Fence> m_fence;
         UINT64 m_fenceValues[c_swapBufferCount];
-        Event m_fenceEvent;
+        handle m_fenceEvent;
         D3D12_VIEWPORT m_viewport;
         XMMATRIX m_projection;
         unique_ptr<D3DConstant> m_projectionConstant;
 
         // Rendering resources
-        ComPtr<IDXGISwapChain3> m_swapChain;
-        ComPtr<ID3D12Resource> m_renderTargets[c_swapBufferCount];
-        ComPtr<ID3D12Resource> m_depthStencil;
+        com_ptr<IDXGISwapChain3> m_swapChain;
+        com_ptr<ID3D12Resource> m_renderTargets[c_swapBufferCount];
+        com_ptr<ID3D12Resource> m_depthStencil;
 
         unique_ptr<DirectX::GraphicsMemory> m_memory;
 

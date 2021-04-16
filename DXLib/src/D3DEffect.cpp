@@ -1,4 +1,4 @@
-#include <wrl/client.h>
+#include <winrt/base.h>
 #include <D3DEffect.h>
 #include <EffectPipelineStateDescription.h>
 #include <wil/result.h>
@@ -8,7 +8,6 @@
 
 using namespace std;
 using namespace DirectX;
-using namespace Microsoft::WRL;
 
 namespace DX
 {
@@ -121,11 +120,11 @@ namespace DX
             }
 
             rootSignatureDesc.Init(static_cast<uint32_t>(rootParameters.size()), rootParameters.data(), 0, nullptr, rootSignatureFlags);
-            auto hr = CreateRootSignature(scene.Device(), &rootSignatureDesc, &m_rootSignature);
+            auto hr = CreateRootSignature(scene.Device(), &rootSignatureDesc, m_rootSignature.put());
 
             THROW_IF_FAILED(hr);
 
-            pd.CreatePipelineState(scene.Device(), m_rootSignature.Get(), vertexShader, pixelShader, &m_pipelineState);
+            pd.CreatePipelineState(scene.Device(), m_rootSignature.get(), vertexShader, pixelShader, m_pipelineState.put());
         }
 
         size_t ObjectConstantStartSolt() const
@@ -137,8 +136,8 @@ namespace DX
         void Apply(D3DScene& scene)
         {
             auto commandList = scene.CommandList();
-            commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-            commandList->SetPipelineState(m_pipelineState.Get());
+            commandList->SetGraphicsRootSignature(m_rootSignature.get());
+            commandList->SetPipelineState(m_pipelineState.get());
             commandList->SetGraphicsRootConstantBufferView(0, scene.Projection().GpuAddress());
 
             auto idx = 1;
@@ -155,12 +154,12 @@ namespace DX
             {
                 constant->Reset();
             }
-            m_pipelineState.Reset();
-            m_rootSignature.Reset();
+            m_pipelineState = nullptr;
+            m_rootSignature = nullptr;
         }
     private:
-        ComPtr<ID3D12PipelineState> m_pipelineState;
-        ComPtr<ID3D12RootSignature> m_rootSignature;
+        winrt::com_ptr<ID3D12PipelineState> m_pipelineState;
+        winrt::com_ptr<ID3D12RootSignature> m_rootSignature;
         vector<InputElement> m_elements;
         vector<D3DConstant*> m_constants;
         size_t m_objectConstantCount;

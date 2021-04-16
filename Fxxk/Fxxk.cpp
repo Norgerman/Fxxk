@@ -4,6 +4,7 @@
 #include "framework.h"
 #include "Fxxk.h"
 #include <fstream>
+#include <winrt/base.h>
 #include <D3DDescriptorHeap.h>
 #include <D3DScene.h>
 #include <D3DObject.h>
@@ -17,9 +18,9 @@
 #define M_PI acosf(-1.0)
 
 using namespace std;
-using namespace Microsoft::WRL;
 using namespace DirectX;
 using namespace DX;
+using namespace winrt;
 
 // Global Variables:
 constexpr auto MAX_LOADSTRING = 100;
@@ -60,6 +61,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_ LPWSTR    lpCmdLine,
     _In_ int       nCmdShow)
 {
+    init_apartment();
+
     wchar_t path[MAX_PATH];
 
     GetModuleFileNameW(NULL, path, MAX_PATH);
@@ -124,8 +127,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     float h = 450;
 
     HRESULT hr = S_OK;
-    std::vector<ComPtr<ID3D12Resource>> textures;
-    ComPtr<ID3D12Resource> texture = nullptr;
+    std::vector<com_ptr<ID3D12Resource>> textures;
+    com_ptr<ID3D12Resource> texture = nullptr;
     std::vector<wstring> textureFiles = { s + L"\\a.png", s + L"\\b.png" };
     std::shared_ptr<D3DDescriptorHeap> textureHeap = make_shared<D3DDescriptorHeap>(g_scene->Device(), 2);
     std::shared_ptr<D3DDescriptorHeap> textureHeap2 = make_shared<D3DDescriptorHeap>(g_scene->Device(), 2);
@@ -138,10 +141,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     for (auto& element : textureFiles)
     {
-        loader.CreateTexture(element.data(), &texture, false);
-        textures.push_back(texture);
-        loader.CreateShaderResourceView(texture.Get(), textureHeap->GetCpuHandle(idx));
-        loader.CreateShaderResourceView(texture.Get(), textureHeap2->GetCpuHandle((idx + 1) % 2));
+        loader.CreateTexture(element.data(), texture.put(), false);
+        loader.CreateShaderResourceView(texture.get(), textureHeap->GetCpuHandle(idx));
+        loader.CreateShaderResourceView(texture.get(), textureHeap2->GetCpuHandle((idx + 1) % 2));
+        textures.push_back(move(texture));
         idx++;
     }
 
@@ -313,6 +316,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
     g_scene.reset();
+    uninit_apartment();
     return (int)msg.wParam;
 }
 
