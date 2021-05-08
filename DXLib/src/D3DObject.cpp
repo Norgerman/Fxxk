@@ -126,16 +126,16 @@ namespace DX {
 
             // textures
             auto count = m_textureHeap ? m_textureHeap->Count() : 0;
-            for (size_t i = 0; i < count; i++, idx++)
+            if (count > 0) 
             {
-                commandList->SetGraphicsRootDescriptorTable(idx, m_textureHeap->GetGpuHandle(i));
+                commandList->SetGraphicsRootDescriptorTable(idx++, m_textureHeap->GetFirstGpuHandle());
             }
 
             // samplers
             count = m_samplerHeap ? m_samplerHeap->Count() : 0;
-            for (size_t i = 0; i < count; i++, idx++)
+            if (count > 0)
             {
-                commandList->SetGraphicsRootDescriptorTable(idx, m_samplerHeap->GetGpuHandle(i));
+                commandList->SetGraphicsRootDescriptorTable(idx++, m_samplerHeap->GetFirstGpuHandle());
             }
 
             // vertex

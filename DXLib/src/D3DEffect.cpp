@@ -88,11 +88,19 @@ namespace DX
                 D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
                 D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
 
-            // effect consant count + object constants + texture count + sampler count + projection + transform
-            vector<CD3DX12_ROOT_PARAMETER> rootParameters(m_constants.size() + m_objectConstantCount + m_textureCount + m_samplerCount + 2);
-            vector<CD3DX12_DESCRIPTOR_RANGE> textureRange(m_textureCount);
-            vector<CD3DX12_DESCRIPTOR_RANGE> samplerRange(m_samplerCount);
+            // effect consant count + object constants + texture count > 0 + sampler count > 0 + projection + transform
+            size_t parameterCount = m_constants.size() + m_objectConstantCount + 2;
+            if (m_textureCount > 0) {
+                parameterCount++;
+            }
+            if (m_samplerCount > 0) {
+                parameterCount++;
+            }
+
+            vector<CD3DX12_ROOT_PARAMETER> rootParameters(parameterCount);
             CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
+            auto textureRange = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, static_cast<uint32_t>(m_textureCount), 0);
+            auto samplerRange = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, static_cast<uint32_t>(m_samplerCount), 0);
 
             rootParameters[0].InitAsConstantBufferView(0);
             rootParameters[1].InitAsConstantBufferView(1);
@@ -106,17 +114,13 @@ namespace DX
             }
 
             // textures
-            for (size_t i = 0; i < m_textureCount; i++, idx++)
-            {
-                textureRange[i] = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, static_cast<uint32_t>(i));
-                rootParameters[idx].InitAsDescriptorTable(1, &textureRange[i], D3D12_SHADER_VISIBILITY_PIXEL);
+            if (m_textureCount > 0) {
+                rootParameters[idx++].InitAsDescriptorTable(1, &textureRange, D3D12_SHADER_VISIBILITY_PIXEL);
             }
 
             // samplers
-            for (size_t i = 0; i < m_samplerCount; i++, idx++)
-            {
-                samplerRange[i] = CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, static_cast<uint32_t>(i));
-                rootParameters[idx].InitAsDescriptorTable(1, &samplerRange[i], D3D12_SHADER_VISIBILITY_PIXEL);
+            if (m_samplerCount > 0) {
+                rootParameters[idx].InitAsDescriptorTable(1, &samplerRange, D3D12_SHADER_VISIBILITY_PIXEL);
             }
 
             rootSignatureDesc.Init(static_cast<uint32_t>(rootParameters.size()), rootParameters.data(), 0, nullptr, rootSignatureFlags);
@@ -180,7 +184,7 @@ namespace DX
     D3DEffect::D3DEffect(
         std::vector<InputElement>&& inputElements,
         std::vector<D3DConstant*>&& effectContants,
-        size_t objectConstantCount, size_t textureCont, size_t samplerCount) : 
+        size_t objectConstantCount, size_t textureCont, size_t samplerCount) :
         m_impl(make_unique<Impl>(move(inputElements), move(effectContants), objectConstantCount, textureCont, samplerCount))
     {
 
