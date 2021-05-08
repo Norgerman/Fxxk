@@ -125,15 +125,13 @@ namespace DX {
             }
 
             // textures
-            auto count = m_textureHeap ? m_textureHeap->Count() : 0;
-            if (count > 0) 
+            if (m_textureHeap)
             {
                 commandList->SetGraphicsRootDescriptorTable(idx++, m_textureHeap->GetFirstGpuHandle());
             }
 
             // samplers
-            count = m_samplerHeap ? m_samplerHeap->Count() : 0;
-            if (count > 0)
+            if (m_samplerHeap)
             {
                 commandList->SetGraphicsRootDescriptorTable(idx++, m_samplerHeap->GetFirstGpuHandle());
             }
