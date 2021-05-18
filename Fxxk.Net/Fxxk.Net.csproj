@@ -33,13 +33,11 @@
   <ItemGroup>
     <CompileShader Include="..\Shaders\VertexShader.hlsl">
       <Shader>vs</Shader>
-      <Entry>main</Entry>
       <SaveAsm>False</SaveAsm>
       <SaveDir>$(OutDir)</SaveDir>
     </CompileShader>
     <CompileShader Include="..\Shaders\PixelShader.hlsl">
       <Shader>ps</Shader>
-      <Entry>main</Entry>
       <SaveAsm>False</SaveAsm>
       <SaveDir>$(OutDir)</SaveDir>
     </CompileShader>

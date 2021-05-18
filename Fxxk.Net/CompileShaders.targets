@@ -13,7 +13,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <ShaderModel Condition="$(ShaderModel)==''">5_1</ShaderModel>
     <ShaderAsmExtension Condition="$(ShaderAsmExtension)==''">asm</ShaderAsmExtension>
     <ShaderBinExtension Condition="$(ShaderBinExtension)==''">cso</ShaderBinExtension>
     <FxcArgs Condition="'$(Configuration)'=='Debug'">$(FxcArgs) /Od /Zi</FxcArgs>
@@ -21,19 +20,22 @@
   </PropertyGroup>
 
   <Target Name="CompileShaders" AfterTargets="Build"
-					Inputs="@(CompileShader);%(CompileShader.Dependancies);%(CompileShader.SaveAsm);%(CompileShader.SaveDir)"
+					Inputs="@(CompileShader);%(CompileShader.Entry);%(CompileShader.Dependancies);%(CompileShader.SaveAsm);%(CompileShader.SaveDir);%(CompileShader.ShaderModel)"
 					Outputs="@(CompileShader -> '%(SaveDir)\%(filename).$(ShaderBinExtension)');@(CompileShader -> '%(SaveDir)\%(filename).$(ShaderAsmExtension)')" >
     <PropertyGroup>
+      <ShaderModel>%(CompileShader.ShaderModel)</ShaderModel>
+      <ShaderModel Condition="$(ShaderModel)==''">5_1</ShaderModel>
+      <Entry>%(CompileShader.Entry)</Entry>
+      <Entry Condition="$(Entry)==''">main</Entry>
       <FxcPath>"$(WindowsSdkDir)bin\$(WindowsSDKVersion)\$(PlatformName)\fxc.exe"</FxcPath>
     </PropertyGroup>
-
     <MakeDir Condition="!Exists('%(CompileShader.SaveDir)')" Directories="%(CompileShader.SaveDir)" />
+    
+    <Exec WorkingDirectory="$(ProjectDir)" Condition="%(CompileShader.SaveAsm) == 'True'"
+					Command="$(FxcPath) $(FxcArgs) &quot;%(CompileShader.fullpath)&quot; /T %(CompileShader.Shader)_$(ShaderModel) /E $(Entry) /Fo &quot;%(CompileShader.SaveDir)\%(CompileShader.filename).$(ShaderBinExtension)&quot; %(CompileShader.Arguments) /Fc &quot;%(CompileShader.SaveDir)\%(CompileShader.filename).$(ShaderAsmExtension)&quot;" />
 
-    <Exec WorkingDirectory="$(ProjectDir)" Condition="%(SaveAsm) == 'True'"
-					Command="$(FxcPath) $(FxcArgs) &quot;%(fullpath)&quot; /T %(Shader)_$(ShaderModel) /E %(Entry) /Fo &quot;%(SaveDir)\%(filename).$(ShaderBinExtension)&quot; %(CompileShader.Arguments) /Fc &quot;%(SaveDir)\%(filename).$(ShaderAsmExtension)&quot;" />
-
-    <Exec WorkingDirectory="$(ProjectDir)" Condition="%(SaveAsm)!='True'"
-					Command="$(FxcPath) $(FxcArgs) &quot;%(fullpath)&quot; /T %(Shader)_$(ShaderModel) /E %(Entry) /Fo &quot;%(SaveDir)\%(filename).$(ShaderBinExtension)&quot; %(CompileShader.Arguments)" />
+    <Exec WorkingDirectory="$(ProjectDir)" Condition="%(CompileShader.SaveAsm)!='True'"
+					Command="$(FxcPath) $(FxcArgs) &quot;%(CompileShader.fullpath)&quot; /T %(CompileShader.Shader)_$(ShaderModel) /E $(Entry) /Fo &quot;%(CompileShader.SaveDir)\%(CompileShader.filename).$(ShaderBinExtension)&quot; %(CompileShader.Arguments)" />
 
   </Target>
 </Project>
