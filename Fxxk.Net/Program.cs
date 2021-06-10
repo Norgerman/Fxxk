@@ -242,6 +242,7 @@ namespace Fxxk.Net
             float angle = 0;
             float angleStep = 1;
             var random = new Random();
+            var viewMatrix = new XMMatrix();
 
             scene.OnUpdate += (scene, second, frame) =>
             {
@@ -279,10 +280,10 @@ namespace Fxxk.Net
                 constant2.Update(color);
 
                 Transform(transform, scene.Viewport, angle, scale, w, h);
-                obj1.UpdateTransform(transform);
+                obj1.UpdateModelView(transform, viewMatrix);
 
                 Transform(transform, scene.Viewport, angle * 2, scale, w, h);
-                obj2.UpdateTransform(transform);
+                obj2.UpdateModelView(transform, viewMatrix);
             };
 
             RenderLoop.Run(form, scene.Tick);

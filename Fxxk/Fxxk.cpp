@@ -295,8 +295,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             textureMatrixYConstant->Update(textureMatrixY);
             colorConstant->Update(color);
 
-            obj1.UpdateTransform(Transform(g_scene->Viewport(), angle, scale, w, h));
-            obj2.UpdateTransform(Transform(g_scene->Viewport(), angle * 2, scale, w, h));
+            obj1.UpdateModelView(Transform(g_scene->Viewport(), angle, scale, w, h), XMMatrixIdentity());
+            obj2.UpdateModelView(Transform(g_scene->Viewport(), angle * 2, scale, w, h), XMMatrixIdentity());
         });
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WINDOWSPROJECT1));

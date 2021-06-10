@@ -35,8 +35,8 @@ namespace DX {
             uint32_t instanceCount = 1,
             D3D12_PRIMITIVE_TOPOLOGY primitiveTopology = D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         virtual void Initialize(D3DScene& scene);
-        virtual void UpdateTransform(const DirectX::XMMATRIX& transform);
-        virtual void UpdateTransform(DirectX::XMMATRIX&& transform);
+        virtual void UpdateModelView(const DirectX::XMMATRIX& transform, const DirectX::XMMATRIX& view);
+        virtual void UpdateModelView(DirectX::XMMATRIX&& transform, DirectX::XMMATRIX&& view);
         void UpdateIndices(const void* data);
         void UpdateConstant(size_t index, const void* data);
         void UpdateAttribute(size_t index, const void* data);

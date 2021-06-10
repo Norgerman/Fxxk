@@ -43,7 +43,7 @@ namespace DX
                 DescriptorHeap^ samplerHeap
             );
             virtual void Initialize(Scene3D^ scene);
-            virtual void UpdateTransform(DX::Sharp::SimpleMath::XMMatrix^ transform);
+            virtual void UpdateModelView(DX::Sharp::SimpleMath::XMMatrix^ transform, DX::Sharp::SimpleMath::XMMatrix^ view);
             void UpdateIndices(void* data);
             void UpdateConstant(size_t index, void* data);
             void UpdateAttribute(size_t index, void* data);

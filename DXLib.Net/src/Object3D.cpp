@@ -62,9 +62,9 @@ namespace DX
             m_value->Initialize(*(scene->Value));
         }
 
-        void Object3D::UpdateTransform(DX::Sharp::SimpleMath::XMMatrix^ transform)
+        void Object3D::UpdateModelView(DX::Sharp::SimpleMath::XMMatrix^ transform, DX::Sharp::SimpleMath::XMMatrix^ view)
         {
-            m_value->UpdateTransform(*transform->Value);
+            m_value->UpdateModelView(*transform->Value, *view->Value);
         }
 
         void Object3D::UpdateIndices(void* data)
