@@ -10,6 +10,7 @@ cbuffer VS_PROJECTION_BUFFER: register(b0) {
 
 cbuffer VS_TRANSFORM_BUFFER: register(b2) {
     matrix transform;
+    matrix view;
     matrix modelView;
     matrix modelViewInverse;
 };

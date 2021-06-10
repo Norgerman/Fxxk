@@ -16,6 +16,7 @@ namespace DX {
     typedef struct BasicObjectConstant
     {
         XMMATRIX Transform;
+        XMMATRIX View;
         XMMATRIX ModelView;
         XMMATRIX ModelViewInverse;
     } BasicObjectConstant;
@@ -40,7 +41,7 @@ namespace DX {
             m_samplerHeap(samplerHeap),
             m_instanceCount(instanceCount),
             m_primitiveTopology(primitiveTopology),
-            m_baiscConstant({ XMMatrixIdentity(), XMMatrixIdentity() })
+            m_basicConstant({ XMMatrixIdentity(), XMMatrixIdentity(), XMMatrixIdentity(), XMMatrixIdentity() })
         {
         }
 
@@ -61,22 +62,23 @@ namespace DX {
             m_samplerHeap(samplerHeap),
             m_instanceCount(instanceCount),
             m_primitiveTopology(primitiveTopology),
-            m_baiscConstant({ XMMatrixIdentity(), XMMatrixIdentity() })
+            m_basicConstant({ XMMatrixIdentity(), XMMatrixIdentity() })
         {
         }
 
         void Initialize(D3DScene& scene)
         {
-            m_modelViewBuffer = make_unique<D3DConstant>(&scene, 4, 16 * 3);
-            m_modelViewBuffer->Update(&m_baiscConstant);
+            m_modelViewBuffer = make_unique<D3DConstant>(&scene, 4, 16 * 4);
+            m_modelViewBuffer->Update(&m_basicConstant);
         }
 
-        void UpdateTransform(const DirectX::XMMATRIX& transform, const DirectX::XMMATRIX& view)
+        void UpdateModelView(const DirectX::XMMATRIX& transform, const DirectX::XMMATRIX& view)
         {
-            m_baiscConstant.Transform = transform;
-            m_baiscConstant.ModelView = XMMatrixMultiply(transform, view);
-            m_baiscConstant.ModelViewInverse = XMMatrixInverse(nullptr, m_baiscConstant.ModelView);
-            m_modelViewBuffer->Update(&m_baiscConstant);
+            m_basicConstant.Transform = transform;
+            m_basicConstant.View = view;
+            m_basicConstant.ModelView = XMMatrixMultiply(transform, view);
+            m_basicConstant.ModelViewInverse = XMMatrixInverse(nullptr, m_basicConstant.ModelView);
+            m_modelViewBuffer->Update(&m_basicConstant);
         }
 
         void UpdateIndices(const void* data)
@@ -182,7 +184,7 @@ namespace DX {
         D3DDescriptorHeap* m_samplerHeap;
         unique_ptr<D3DConstant> m_modelViewBuffer;
         D3DIndex* m_indices;
-        BasicObjectConstant m_baiscConstant;
+        BasicObjectConstant m_basicConstant;
         D3D12_PRIMITIVE_TOPOLOGY m_primitiveTopology;
         uint32_t m_instanceCount;
     };
@@ -223,12 +225,12 @@ namespace DX {
 
     void D3DObject::UpdateModelView(const DirectX::XMMATRIX& transform, const DirectX::XMMATRIX& view)
     {
-        m_impl->UpdateTransform(transform, view);
+        m_impl->UpdateModelView(transform, view);
     }
 
     void D3DObject::UpdateModelView(DirectX::XMMATRIX&& transform, DirectX::XMMATRIX&& view)
     {
-        m_impl->UpdateTransform(transform, view);
+        m_impl->UpdateModelView(transform, view);
     }
 
     void D3DObject::UpdateIndices(const void* data)
