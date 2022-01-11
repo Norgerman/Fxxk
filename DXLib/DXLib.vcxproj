@@ -21,6 +21,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\D3D12AgilitySDK.h" />
     <ClInclude Include="include\D3DAttribute.h" />
     <ClInclude Include="include\D3DConstant.h" />
     <ClInclude Include="include\D3DData.h" />
