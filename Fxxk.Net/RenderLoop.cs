@@ -22,6 +22,9 @@ using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace Fxxk.Net
 {
@@ -53,7 +56,7 @@ namespace Fxxk.Net
         /// <summary>
         /// Initializes a new instance of the <see cref="RenderLoop"/> class.
         /// </summary>
-        public RenderLoop() {}
+        public RenderLoop() { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RenderLoop"/> class.
@@ -76,10 +79,10 @@ namespace Fxxk.Net
             }
             set
             {
-                if(control == value) return;
+                if (control == value) return;
 
                 // Remove any previous control
-                if(control != null && !switchControl)
+                if (control != null && !switchControl)
                 {
                     isControlAlive = false;
                     control.Disposed -= ControlDisposed;
@@ -121,9 +124,9 @@ namespace Fxxk.Net
                 switchControl = false;
             }
 
-            if(isControlAlive)
+            if (isControlAlive)
             {
-                if(UseApplicationDoEvents)
+                if (UseApplicationDoEvents)
                 {
                     // Revert back to Application.DoEvents in order to support Application.AddMessageFilter
                     // Seems that DoEvents is compatible with Mono unlike Application.Run that was not running
@@ -135,28 +138,32 @@ namespace Fxxk.Net
                     var localHandle = controlHandle;
                     if (localHandle != IntPtr.Zero)
                     {
+                        
                         // Previous code not compatible with Application.AddMessageFilter but faster then DoEvents
-                        NativeMessage msg;
-                        while (Win32Native.PeekMessage(out msg, IntPtr.Zero, 0, 0, 0) != 0)
+                        while (PInvoke.PeekMessage(out MSG msg, HWND.Null, 0, 0, 0) != 0)
                         {
-                            if (Win32Native.GetMessage(out msg, IntPtr.Zero, 0, 0) == -1)
+                            if ((PInvoke.GetMessage(out msg, HWND.Null, 0, 0) == -1))
                             {
-                                throw new InvalidOperationException(String.Format(CultureInfo.InvariantCulture,
+                                throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture,
                                     "An error happened in rendering loop while processing windows messages. Error: {0}",
                                     Marshal.GetLastWin32Error()));
                             }
 
                             // NCDESTROY event?
-                            if (msg.msg == 130)
+                            if (msg.message == 130)
                             {
                                 isControlAlive = false;
                             }
-
-                            var message = new Message() { HWnd = msg.handle, LParam = msg.lParam, Msg = (int)msg.msg, WParam = msg.wParam };
+                            var message = new Message() { HWnd = msg.hwnd, LParam = msg.lParam, Msg = (int)msg.message, WParam = (nint)msg.wParam.Value };
                             if (!Application.FilterMessage(ref message))
                             {
-                                Win32Native.TranslateMessage(ref msg);
-                                Win32Native.DispatchMessage(ref msg);
+                                unsafe
+                                {
+                                    var ptr = &msg;
+                                    PInvoke.TranslateMessage(ptr);
+                                    PInvoke.DispatchMessage(ptr);
+                                }
+
                             }
                         }
                     }
@@ -198,13 +205,13 @@ namespace Fxxk.Net
         /// <param name="form">The form.</param>
         /// <param name="renderCallback">The rendering callback.</param>
         /// <param name="useApplicationDoEvents">if set to <c>true</c> indicating whether the render loop should use the default <see cref="Application.DoEvents"/> instead of a custom window message loop lightweight for GC. Default is false.</param>
-        /// <exception cref="System.ArgumentNullException">form
+        /// <exception cref="ArgumentNullException">form
         /// or
         /// renderCallback</exception>
         public static void Run(Control form, RenderCallback renderCallback, bool useApplicationDoEvents = false)
         {
-            if(form == null) throw new ArgumentNullException("form");
-            if(renderCallback == null) throw new ArgumentNullException("renderCallback");
+            if (form == null) throw new ArgumentNullException("form");
+            if (renderCallback == null) throw new ArgumentNullException("renderCallback");
 
             form.Show();
             using var renderLoop = new RenderLoop(form) { UseApplicationDoEvents = useApplicationDoEvents };
@@ -224,9 +231,8 @@ namespace Fxxk.Net
         {
             get
             {
-                NativeMessage msg;
-                return (bool)(Win32Native.PeekMessage(out msg, IntPtr.Zero, 0, 0, 0) == 0);
+                return PInvoke.PeekMessage(out MSG _, HWND.Null, 0, 0, 0) == 0;
             }
         }
-   }
+    }
 }
